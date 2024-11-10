@@ -2,6 +2,7 @@ package kinnect.freenect
 
 import com.sun.jna.*
 import com.sun.jna.ptr.PointerByReference
+import era.utils.files.KiLogger
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -174,11 +175,9 @@ object Freenect : Library {
     class NativeDevice : PointerType, Device {
         override var videoMode: FrameMode? = null
         private var videoBuffer: ByteBuffer? = null
-        private var videoHandler: VideoHandler? = null
 
         override var depthMode: FrameMode? = null
         private var depthBuffer: ByteBuffer? = null
-        private var depthHandler: DepthHandler? = null
 
         private val accelX: DoubleBuffer = DoubleBuffer.allocate(1)
         private val accelY: DoubleBuffer = DoubleBuffer.allocate(1)
@@ -192,23 +191,17 @@ object Freenect : Library {
         override var tiltAngle = 0.0
         override var accel: DoubleArray = DoubleArray(3)
 
-        private val videoCallback: NativeVideoCallback = object : NativeVideoCallback {
-            override fun callback(dev: Pointer?, depth: Pointer?, timestamp: Int) {
+        class VideoCallback(val videoHandler: VideoHandler?, val videoMode: FrameMode?, val videoBuffer: ByteBuffer?) : NativeVideoCallback {
+            override fun callback(dev: Pointer?, frame: Pointer?, timestamp: Int) {
                 videoHandler!!.onFrameReceived(videoMode, videoBuffer, timestamp)
             }
         }
 
-        private val depthCallback: NativeDepthCallback = object : NativeDepthCallback {
+        class DepthCallback(val depthHandler: DepthHandler?, val depthMode: FrameMode?, val depthBuffer: ByteBuffer?) : NativeDepthCallback {
             override fun callback(dev: Pointer?, depth: Pointer?, timestamp: Int) {
-                depthHandler!!.onFrameReceived(depthMode, depthBuffer, timestamp)
+                    depthHandler?.onFrameReceived(depthMode, depthBuffer, timestamp)
             }
         }
-
-//        class MyCallbackImpl : NativeDepthCallback {
-//            override fun callback(dev: Pointer?, depth: Pointer?, timestamp: Int) {
-//                depthHandler!!.onFrameReceived(depthMode, depthBuffer, timestamp)
-//            }
-//        }
 
         constructor()
 
@@ -217,8 +210,6 @@ object Freenect : Library {
             this.rawTiltState = freenect_get_tilt_state(this)
             this.accel = DoubleArray(3)
             refreshTiltState()
-            //setVideoFormat(VideoFormat.RGB);
-            //setDepthFormat(DepthFormat.D10BIT);
         }
 
         override fun close() {
@@ -226,7 +217,7 @@ object Freenect : Library {
         }
 
         override val deviceIndex: Int
-            get() = TODO("Not yet implemented")
+            get() = index
 
         override fun setDepthFormat(fmt: DepthFormat?) {
             setDepthFormat(fmt, Resolution.MEDIUM)
@@ -278,29 +269,44 @@ object Freenect : Library {
         }
 
         override fun startVideo(handler: VideoHandler?): Int {
-            this.videoHandler = handler
-            freenect_set_video_callback(this, videoCallback)
+            freenect_set_video_callback(this, videoInst(handler, videoMode, videoBuffer))
             return freenect_start_video(this)
         }
 
         override fun stopVideo(): Int {
             val rval = freenect_stop_video(this)
             freenect_set_video_callback(this, null)
-            this.videoHandler = null
             return rval
         }
 
         override fun startDepth(handler: DepthHandler?): Int {
-            this.depthHandler = handler
-            freenect_set_depth_callback(this, depthCallback)
+            freenect_set_depth_callback(this, depthInst(handler, depthMode, depthBuffer))
             return freenect_start_depth(this)
         }
 
         override fun stopDepth(): Int {
             val rval = freenect_stop_depth(this)
             freenect_set_depth_callback(this, null)
-            this.depthHandler = null
             return rval
+        }
+
+        companion object {
+            private var depthInstance: DepthCallback? = null
+            private var videoInstance: VideoCallback? = null
+
+            fun depthInst(depthHandler: DepthHandler?, depthMode: FrameMode?, depthBuffer: ByteBuffer?) : DepthCallback {
+                if(depthInstance == null) {
+                    depthInstance = DepthCallback(depthHandler, depthMode, depthBuffer)
+                }
+                return depthInstance!!
+            }
+
+            fun videoInst(videoHandler: VideoHandler?, videoMode: FrameMode?, videoBuffer: ByteBuffer?) : VideoCallback {
+                if(videoInstance == null) {
+                    videoInstance = VideoCallback(videoHandler, videoMode, videoBuffer)
+                }
+                return videoInstance!!
+            }
         }
     }
 

@@ -22,7 +22,6 @@ class DepthHandlerImpl(private val callback: KinnectDepthCallback) : DepthHandle
     }
 
     override fun onFrameReceived(mode: FrameMode?, frame: ByteBuffer?, timestamp: Int) {
-        println(" " + Date().getTime())
         frame!!.position(0).get(depthDataBytes)
         for (i in 0..<KINNECT_DEPTH_COLS * KINNECT_DEPTH_ROWS) {
             depthMmData[i] =

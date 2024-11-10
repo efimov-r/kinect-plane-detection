@@ -10,6 +10,8 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":utils"))
+
     implementation(files("lib/jna.jar"))
     implementation(files("lib/opencv-4100.jar"))
     testImplementation(kotlin("test"))
