@@ -26,7 +26,6 @@ package kinnect.freenect
 
 interface Context {
     fun numDevices(): Int
-    fun setLogHandler(handler: LogHandler?)
     fun setLogLevel(level: LogLevel)
     fun openDevice(index: Int): Device
     fun shutdown()

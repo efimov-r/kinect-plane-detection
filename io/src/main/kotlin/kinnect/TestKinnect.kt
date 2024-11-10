@@ -6,6 +6,8 @@ import kinnect.freenect.Freenect
 import kinnect.freenect.VideoFormat
 import kinnect.handlers.DepthHandlerImpl
 import kinnect.handlers.DepthHandlerImpl.KinnectDepthCallback
+import kinnect.handlers.VideoHandlerImpl
+import kinnect.handlers.VideoHandlerImpl.Companion.createRgbMat
 import org.opencv.core.Core
 import org.opencv.highgui.HighGui
 
@@ -28,12 +30,19 @@ object TestKinnect {
 //        VideoHandler vh = new VideoHandlerImpl(rgbImage);
 //        DepthHandlerImplTest dh = new DepthHandlerImplTest(depthImage);
         val depthMat = createDepthMat()
+        val rgbMap = createRgbMat()
+
         val dh = DepthHandlerImpl(KinnectDepthCallback { depthMmData: IntArray? ->
             KinnectDepthTestMatCreator.createMap(depthMat, depthMmData!!)
             HighGui.imshow("Depth Image", depthMat)
             HighGui.waitKey(3)
         })
-        //        device.startVideo(vh);
+//        val vh = VideoHandlerImpl(rgbMap) {
+//            img -> HighGui.imshow("Video Image", img)
+//            HighGui.waitKey(3)
+//        }
+
+//        device.startVideo(vh);
         device.startDepth(dh)
 
         var i = 0

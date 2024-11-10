@@ -45,7 +45,7 @@ class KiLogger private constructor(fileName: String) {
 
     companion object {
         private var instance: KiLogger? = null
-        fun inf(inf: String?) {
+        fun inf(inf: String) {
             if (instance == null) {
                 instance = KiLogger("${Now.getDateTimeStr()}.log")
             }
@@ -55,7 +55,11 @@ class KiLogger private constructor(fileName: String) {
             println(log)
         }
 
-        fun err(err: kotlin.String?) {
+        fun devInfo(dev: String, inf: String) {
+            inf("device $dev: $inf")
+        }
+
+        fun err(err: kotlin.String) {
             if (instance == null) {
                 instance = KiLogger("${Now.getDateTimeStr()}.log")
             }

@@ -67,23 +67,6 @@ object Freenect : Library {
 
     private external fun freenect_stop_video(dev: NativeDevice?): Int
 
-    private external fun freenect_update_tilt_state(dev: NativeDevice?): Int
-
-    private external fun freenect_get_tilt_state(dev: NativeDevice?): TiltState?
-
-    private external fun freenect_get_tilt_status(tiltState: TiltState?): Byte
-
-    private external fun freenect_get_tilt_degs(tiltState: TiltState?): Double
-
-    private external fun freenect_set_tilt_degs(dev: NativeDevice?, angle: Double): Int
-
-    private external fun freenect_set_led(dev: NativeDevice?, option: Int): Int
-
-    private external fun freenect_get_mks_accel(
-        tiltState: TiltState?, x: DoubleBuffer?, y: DoubleBuffer?,
-        z: DoubleBuffer?
-    )
-
     private external fun freenect_select_subdevices(ctx: NativeContext?, flag: Int): Int
 
     private external fun freenect_get_video_mode_count(): Int
@@ -111,23 +94,12 @@ object Freenect : Library {
 
         constructor()
 
-        private var logHandler: LogHandler? = null
-        private val logCallback: NativeLogCallback = object : NativeLogCallback {
-            override fun callback(dev: NativeDevice?, level: Int, msg: String?) {
-                logHandler!!.onMessage(dev, LogLevel.fromInt(level), msg)
-            }
+        class LogCallback : NativeLogCallback {
+            override fun callback(dev: NativeDevice?, logLevel: Int, msg: String?
+            ) = KiLogger.devInfo(dev?.deviceIndex.toString(), msg ?: "empty mess")
         }
 
         constructor(ptr: Pointer?) : super(ptr)
-
-        override fun setLogHandler(handler: LogHandler?) {
-            this.logHandler = handler
-            if (logHandler == null) {
-                freenect_set_log_callback(this, null)
-            } else {
-                freenect_set_log_callback(this, logCallback)
-            }
-        }
 
         override fun setLogLevel(level: LogLevel) {
             freenect_set_log_level(this, level.intValue())
@@ -141,6 +113,7 @@ object Freenect : Library {
             val devicePtr = PointerByReference()
             val rval = freenect_open_device(this, devicePtr, index)
             check(rval == 0) { "freenect_open_device() returned " + rval }
+            freenect_set_log_callback(this, logInst())
             return NativeDevice(devicePtr.getValue(), index)
         }
 
@@ -168,7 +141,18 @@ object Freenect : Library {
         }
 
         override fun selectSubdev() {
-            freenect_select_subdevices(this, DeviceFlags.CAMERA.intValue())
+            freenect_select_subdevices(this, 2) //camera only
+        }
+
+        companion object {
+            private var logInstance : LogCallback? = null
+
+            fun logInst() : LogCallback {
+                if(logInstance == null) {
+                    logInstance = LogCallback()
+                }
+                return logInstance!!
+            }
         }
     }
 
@@ -179,17 +163,7 @@ object Freenect : Library {
         override var depthMode: FrameMode? = null
         private var depthBuffer: ByteBuffer? = null
 
-        private val accelX: DoubleBuffer = DoubleBuffer.allocate(1)
-        private val accelY: DoubleBuffer = DoubleBuffer.allocate(1)
-        private val accelZ: DoubleBuffer = DoubleBuffer.allocate(1)
-
         private var index = 0
-
-        private var rawTiltState: TiltState? = null
-        override var tiltStatus: TiltStatus? = null
-
-        override var tiltAngle = 0.0
-        override var accel: DoubleArray = DoubleArray(3)
 
         class VideoCallback(val videoHandler: VideoHandler?, val videoMode: FrameMode?, val videoBuffer: ByteBuffer?) : NativeVideoCallback {
             override fun callback(dev: Pointer?, frame: Pointer?, timestamp: Int) {
@@ -207,9 +181,6 @@ object Freenect : Library {
 
         constructor(ptr: Pointer?, index: Int) : super(ptr) {
             this.index = index
-            this.rawTiltState = freenect_get_tilt_state(this)
-            this.accel = DoubleArray(3)
-            refreshTiltState()
         }
 
         override fun close() {
@@ -247,25 +218,6 @@ object Freenect : Library {
                 freenect_set_video_buffer(this, videoBuffer)
                 this.videoMode = mode
             }
-        }
-
-        override fun setLed(status: LedStatus?): Int {
-            return freenect_set_led(this, status!!.intValue())
-        }
-
-        override fun refreshTiltState() {
-            freenect_update_tilt_state(this)
-            this.rawTiltState = freenect_get_tilt_state(this)
-            this.tiltAngle = freenect_get_tilt_degs(rawTiltState)
-            this.tiltStatus = TiltStatus.fromInt(freenect_get_tilt_status(rawTiltState).toInt())
-            freenect_get_mks_accel(rawTiltState, accelX, accelY, accelZ)
-            this.accel[0] = accelX.get(0)
-            this.accel[1] = accelY.get(0)
-            this.accel[2] = accelZ.get(0)
-        }
-
-        override fun setTiltAngle(angle: Double): Int {
-            return freenect_set_tilt_degs(this, angle)
         }
 
         override fun startVideo(handler: VideoHandler?): Int {

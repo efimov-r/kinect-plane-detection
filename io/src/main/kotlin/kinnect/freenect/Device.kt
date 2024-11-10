@@ -1,12 +1,6 @@
 package kinnect.freenect
 
 interface Device {
-    val accel: DoubleArray
-    fun setLed(status: LedStatus?): Int
-    fun refreshTiltState()
-    val tiltAngle: Double
-    fun setTiltAngle(angle: Double): Int
-    val tiltStatus: TiltStatus?
     fun setDepthFormat(fmt: DepthFormat?)
     fun setVideoFormat(fmt: VideoFormat?)
     fun setDepthFormat(fmt: DepthFormat?, res: Resolution?)
