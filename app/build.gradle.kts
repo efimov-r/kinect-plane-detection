@@ -11,6 +11,8 @@ dependencies {
     implementation(project(":utils"))
     implementation(project(":view"))
     implementation(project(":io"))
+    implementation(project(":data"))
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
 }
 
 application {

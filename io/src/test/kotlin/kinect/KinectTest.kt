@@ -17,7 +17,7 @@ import kotlin.test.assertEquals
 internal class KinectTest {
     @Test
     fun testDepthCam() {
-        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME)
 
         val depthMat = createDepthMat()
         val dh = DepthHandlerTestImpl(KinnectDepthTestCallback { depthMmData ->
@@ -26,11 +26,7 @@ internal class KinectTest {
             HighGui.waitKey(3)
         })
 
-        val tmpContext = Freenect.createContext()
-        tmpContext.selectSubdev()
-        val device = tmpContext.openDevice(0)
-        device.setDepthFormat(DepthFormat.D11BIT)
-        device.startDepth(dh)
+        Kinect.init(dh)
 
         Thread.sleep(1000*60*60)
         assertEquals(1, 1)

@@ -9,15 +9,11 @@ import kinect.freenect.DepthHandler
 import kinect.freenect.FrameMode
 import kinect.util.Tari.Companion.getTari
 import java.nio.ByteBuffer
+import kotlinx.coroutines.channels.Channel
 
-class DepthHandlerImpl(private val callback: KinnectDepthCallback) : DepthHandler {
-    val depthDataBytes: ByteArray = ByteArray(KINECT_DEPTH_COLS * KINECT_DEPTH_ROWS * 2)
-    val cloud: Cloud = Cloud(KINECT_DEPTH_ROWS * KINECT_DEPTH_COLS)
-
-
-    fun interface KinnectDepthCallback {
-        fun callback(cloud: Cloud)
-    }
+class DepthHandlerImpl(val channel: Channel<Cloud>) : DepthHandler {
+    private val depthDataBytes: ByteArray = ByteArray(KINECT_DEPTH_COLS * KINECT_DEPTH_ROWS * 2)
+    private val cloud: Cloud = Cloud(KINECT_DEPTH_ROWS * KINECT_DEPTH_COLS)
 
     override fun onFrameReceived(mode: FrameMode?, frame: ByteBuffer?, timestamp: Int) {
         frame!!.position(0).get(depthDataBytes)
@@ -34,7 +30,6 @@ class DepthHandlerImpl(private val callback: KinnectDepthCallback) : DepthHandle
                 ToCloud.getInstance().calcYFast(mmRes, y),
                 ToCloud.getInstance().calcXFast(mmRes, x)))
         }
-
-        callback.callback(cloud)
+        channel.trySend(cloud)
     }
 }
