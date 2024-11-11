@@ -1,7 +1,7 @@
-package v3d.runs
+package v3d
 
 import java.nio.FloatBuffer
 
-interface V3dRunner {
+fun interface V3dRunner {
     fun setVertexBuffer(buffer: FloatBuffer): Int //вернуть сколько отрисовывать вершин сейчас
 }

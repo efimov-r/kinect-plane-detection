@@ -1,8 +1,6 @@
-package kinect
+package kinect.testUtils
 
-import kinect.Constant.KINECT_DEPTH_COLS
-import kinect.Constant.KINECT_DEPTH_MM_NULL
-import kinect.Constant.KINECT_DEPTH_ROWS
+import kinect.Constant
 import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.core.Point
@@ -12,14 +10,14 @@ import org.opencv.imgproc.Imgproc
 object KinectDepthTestMatCreator {
     @JvmStatic
     fun createDepthMat(): Mat {
-        return Mat(KINECT_DEPTH_ROWS, KINECT_DEPTH_COLS, CvType.CV_8UC3)
+        return Mat(Constant.KINECT_DEPTH_ROWS, Constant.KINECT_DEPTH_COLS, CvType.CV_8UC3)
     }
 
     @JvmStatic
     fun createMap(depthImage: Mat, depthMmData: IntArray) {
-        val rgbData = ByteArray(KINECT_DEPTH_COLS * KINECT_DEPTH_ROWS * 3)
+        val rgbData = ByteArray(Constant.KINECT_DEPTH_COLS * Constant.KINECT_DEPTH_ROWS * 3)
         for (i in 0..<640 * 480) {
-            if (depthMmData[i] == KINECT_DEPTH_MM_NULL) {
+            if (depthMmData[i] == Constant.KINECT_DEPTH_MM_NULL) {
                 rgbData[i * 3] = (0).toByte()
                 rgbData[i * 3 + 1] = (255).toByte()
                 rgbData[i * 3 + 2] = (0).toByte()

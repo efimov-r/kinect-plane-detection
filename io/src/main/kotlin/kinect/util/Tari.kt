@@ -1,8 +1,6 @@
-package kinect.tarir
+package kinect.util
 
-import kinect.Constant.KINECT_DEPTH_MAX
-import kinect.Constant.KINECT_DEPTH_MIN
-import kinect.Constant.KINECT_DEPTH_MM_NULL
+import kinect.Constant
 
 class Tari private constructor() {
     private var entities: MutableList<Entity> = ArrayList<Entity>()
@@ -10,7 +8,7 @@ class Tari private constructor() {
 
     init {
         initEntities()
-        this.tariMas = IntArray(KINECT_DEPTH_MAX + 1)
+        this.tariMas = IntArray(Constant.KINECT_DEPTH_MAX + 1)
         for (i in tariMas.indices) {
             tariMas[i] = calcVal(i)
         }
@@ -28,7 +26,7 @@ class Tari private constructor() {
     private fun getLastEntity(t: Int): Entity? {
         var t = t
         var res: Entity? = null
-        while (t >= KINECT_DEPTH_MIN) {
+        while (t >= Constant.KINECT_DEPTH_MIN) {
             res = getEntity(t)
             if (res != null) {
                 return res
@@ -41,7 +39,7 @@ class Tari private constructor() {
     private fun getNextEntity(t: Int): Entity? {
         var t = t
         var res: Entity? = null
-        while (t <= KINECT_DEPTH_MAX) {
+        while (t <= Constant.KINECT_DEPTH_MAX) {
             res = getEntity(t)
             if (res != null) {
                 return res
@@ -52,12 +50,12 @@ class Tari private constructor() {
     }
 
     private fun calcVal(t: Int): Int {
-        if (t < KINECT_DEPTH_MIN) {
-            return KINECT_DEPTH_MM_NULL
+        if (t < Constant.KINECT_DEPTH_MIN) {
+            return Constant.KINECT_DEPTH_MM_NULL
         }
 
-        if (t > KINECT_DEPTH_MAX) {
-            return KINECT_DEPTH_MM_NULL
+        if (t > Constant.KINECT_DEPTH_MAX) {
+            return Constant.KINECT_DEPTH_MM_NULL
         }
 
         val res = getEntity(t)
@@ -69,7 +67,7 @@ class Tari private constructor() {
         val nextEntity = getNextEntity(t)
 
         if (lastEntity == null || nextEntity == null) {
-            return KINECT_DEPTH_MM_NULL
+            return Constant.KINECT_DEPTH_MM_NULL
         }
 
         val count = nextEntity.t - lastEntity.t
@@ -82,7 +80,7 @@ class Tari private constructor() {
     }
 
     private fun initEntities() {
-        entities.add(Entity(KINECT_DEPTH_MIN, 452))
+        entities.add(Entity(Constant.KINECT_DEPTH_MIN, 452))
         entities.add(Entity(365, 465))
         entities.add(Entity(375, 480))
         entities.add(Entity(400, 500))
@@ -268,20 +266,38 @@ class Tari private constructor() {
         entities.add(Entity(1034, 5830))
         entities.add(Entity(1036, 6020))
         entities.add(Entity(1038, 6290))
-        entities.add(Entity(KINECT_DEPTH_MAX, 6595))
+        entities.add(Entity(Constant.KINECT_DEPTH_MAX, 6595))
     }
 
     companion object {
-        private var tari: Tari? = null
+        private var instance: Tari? = null
 
         fun getTari(t: Int): Int {
-            if (t > KINECT_DEPTH_MAX) {
-                return KINECT_DEPTH_MM_NULL
+            if (t > Constant.KINECT_DEPTH_MAX) {
+                return Constant.KINECT_DEPTH_MM_NULL
             }
-            if (tari == null) {
-                tari = Tari()
+            if (instance == null) {
+                instance = Tari()
             }
-            return tari!!.tariMas[t]
+            return instance!!.tariMas[t]
+        }
+    }
+
+    class Entity {
+        val t: Int
+        val min: Int
+        val max: Int
+
+        constructor(t: Int, min: Int, max: Int) {
+            this.t = t
+            this.min = min
+            this.max = max
+        }
+
+        constructor(t: Int, minmax: Int) {
+            this.t = t
+            this.min = minmax
+            this.max = minmax
         }
     }
 }

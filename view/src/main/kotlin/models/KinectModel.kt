@@ -1,36 +1,24 @@
 package models
 
-import v3d.runs.V3dRunner
+import v3d.V3dModel
 import java.nio.FloatBuffer
-import java.util.concurrent.TimeUnit
 
 
-class KinnectModelCreator(private val multi: Float) : V3dRunner {
+class KinectModel(private val multi: Float) : V3dModel {
     private var index = 0
 
-    private var isFirst = true
+    override fun buildModel(buffer: FloatBuffer): Int {
+        index = 0
+        createBodyModel(buffer)
 
-    override fun setVertexBuffer(buffer: FloatBuffer): Int { //768
-        if (isFirst) {
-            index = 0
-            createBodyModel(buffer)
-
-            createCircle(buffer, 0.1f, -30f, 10f, COLOR_2)
-            createCircle(buffer, 0.1f, 20f, 10f, COLOR_2)
-            createCircle(buffer, 0.1f, 45f, 10f, COLOR_2)
-            createCircle(buffer, 0.1f, -5f, 1f, COLOR_3)
-
-            isFirst = false
-        }
-
-        try {
-            TimeUnit.MILLISECONDS.sleep(20)
-        } catch (e: InterruptedException) {
-            //ignore
-        }
-
+        createCircle(buffer, 0.1f, -30f, 10f, COLOR_2)
+        createCircle(buffer, 0.1f, 20f, 10f, COLOR_2)
+        createCircle(buffer, 0.1f, 45f, 10f, COLOR_2)
+        createCircle(buffer, 0.1f, -5f, 1f, COLOR_3)
         return index / 4
     }
+
+    override fun getSizeBuf(): Int = sizeBuf
 
     private fun createCircle(vertices: FloatBuffer, dx: Float, dy: Float, ray: Float, color: Float) { //96
         addSquare(
@@ -199,7 +187,8 @@ class KinnectModelCreator(private val multi: Float) : V3dRunner {
         private const val COLOR_2 = 1f
         private const val COLOR_3 = 0f
 
-        val sizeBuf: Int
-            get() = 192
+        const val sizeBuf: Int = 192
     }
+
+    class Vertex(var x: Float, var y: Float, var z: Float)
 }

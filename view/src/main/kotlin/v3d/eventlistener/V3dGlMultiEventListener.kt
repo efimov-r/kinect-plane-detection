@@ -4,7 +4,7 @@ import com.jogamp.opengl.GL
 import com.jogamp.opengl.GL3
 import com.jogamp.opengl.GLAutoDrawable
 import com.jogamp.opengl.GLEventListener
-import v3d.runs.V3dRunner
+import v3d.V3dRunner
 import v3d.shaders.Shader
 import v3d.utils.FpsInformator
 import v3d.utils.V3dUtils.showErrorMess
@@ -76,8 +76,12 @@ class V3dGlMultiEventListener(
         gl.glClear(GL.GL_COLOR_BUFFER_BIT or GL.GL_DEPTH_BUFFER_BIT)
         for (v3dComplect in v3dComplects) {
             val floatBuffer = v3dComplect.vboHelper!!.mapBuffer(gl)
-            val countPointsRender = v3dComplect.runner!!.setVertexBuffer(floatBuffer)
-            v3dComplect.vboHelper!!.unmapBuffer(gl)
+            var countPointsRender = 0
+            if(floatBuffer != null) {
+                countPointsRender = v3dComplect.runner!!.setVertexBuffer(floatBuffer)
+                v3dComplect.vboHelper!!.unmapBuffer(gl)
+            }
+
 
             for (shader in v3dComplect.shaders!!) {
                 shader.setShader(gl, modelviewMatrix)

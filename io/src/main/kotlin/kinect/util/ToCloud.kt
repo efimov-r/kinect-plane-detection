@@ -1,30 +1,27 @@
-package era.kinect.cloud
+package kinect.util
 
-import kinect.Constant.KINECT_DEPTH_COLS
-import kinect.Constant.KINECT_DEPTH_DG_HORIZONTAL
-import kinect.Constant.KINECT_DEPTH_DG_VERTICAL
-import kinect.Constant.KINECT_DEPTH_ROWS
+import kinect.Constant
 import kotlin.math.tan
 
 class ToCloud private constructor() {
-    private val xTanMas: DoubleArray = DoubleArray(KINECT_DEPTH_COLS)
-    private val yTanMas: DoubleArray = DoubleArray(KINECT_DEPTH_ROWS)
+    private val xTanMas: DoubleArray = DoubleArray(Constant.KINECT_DEPTH_COLS)
+    private val yTanMas: DoubleArray = DoubleArray(Constant.KINECT_DEPTH_ROWS)
 
     init {
         for(i in xTanMas.indices) {
-            xTanMas[i] = calcTan(i, KINECT_DEPTH_COLS, KINECT_DEPTH_DG_HORIZONTAL)
+            xTanMas[i] = calcTan(i, Constant.KINECT_DEPTH_COLS, Constant.KINECT_DEPTH_DG_HORIZONTAL)
         }
         for(i in yTanMas.indices) {
-            yTanMas[i] = calcTan(i, KINECT_DEPTH_ROWS, KINECT_DEPTH_DG_VERTICAL)
+            yTanMas[i] = calcTan(i, Constant.KINECT_DEPTH_ROWS, Constant.KINECT_DEPTH_DG_VERTICAL)
         }
     }
 
     fun calcX(mm: Int, x: Int): Int {
-        return (calcTan(x, KINECT_DEPTH_COLS, 57.0) * mm).toInt()
+        return (calcTan(x, Constant.KINECT_DEPTH_COLS, 57.0) * mm).toInt()
     }
 
     fun calcY(mm: Int, y: Int): Int {
-        return (calcTan(y, KINECT_DEPTH_ROWS, 43.0) * mm).toInt()
+        return (calcTan(y, Constant.KINECT_DEPTH_ROWS, 43.0) * mm).toInt()
     }
 
     fun calcXFast(mm: Int, x: Int): Int {
@@ -34,8 +31,6 @@ class ToCloud private constructor() {
     fun calcYFast(mm: Int, y: Int): Int {
         return (xTanMas[y] * mm).toInt()
     }
-
-
 
     private fun calcTan(xy: Int, hw: Int, ug: Double): Double {
         val hw05 = hw/2

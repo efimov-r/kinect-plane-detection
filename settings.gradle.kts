@@ -24,3 +24,4 @@ include(":utils")
 rootProject.name = "kkig"
 include("view")
 include("io")
+include("data")

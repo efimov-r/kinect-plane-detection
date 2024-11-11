@@ -11,6 +11,7 @@ repositories {
 
 dependencies {
     implementation(project(":utils"))
+    implementation(project(":data"))
 
     implementation(files("lib/jna.jar"))
     implementation(files("lib/opencv-4100.jar"))
