@@ -1,4 +1,4 @@
-package kinnect.freenect
+package kinect.freenect
 
 import java.nio.ByteBuffer
 

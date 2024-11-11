@@ -1,4 +1,4 @@
-package kinnect.freenect
+package kinect.freenect
 
 enum class DepthFormat(private val value: Int) {
     D11BIT(0),

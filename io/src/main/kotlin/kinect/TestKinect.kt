@@ -1,18 +1,17 @@
-package kinnect
+package kinect
 
-import kinnect.KinnectDepthTestMatCreator.createDepthMat
-import kinnect.freenect.DepthFormat
-import kinnect.freenect.Freenect
-import kinnect.freenect.VideoFormat
-import kinnect.handlers.DepthHandlerImpl
-import kinnect.handlers.DepthHandlerImpl.KinnectDepthCallback
-import kinnect.handlers.VideoHandlerImpl
-import kinnect.handlers.VideoHandlerImpl.Companion.createRgbMat
+import kinect.KinectDepthTestMatCreator.createDepthMat
+import kinect.freenect.DepthFormat
+import kinect.freenect.Freenect
+import kinect.freenect.VideoFormat
+import kinect.handlers.DepthHandlerImpl
+import kinect.handlers.DepthHandlerImpl.KinnectDepthCallback
+import kinect.handlers.VideoHandlerImpl.Companion.createRgbMat
 import org.opencv.core.Core
 import org.opencv.highgui.HighGui
 
 
-object TestKinnect {
+object TestKinect {
     fun execute() {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
         
@@ -33,7 +32,7 @@ object TestKinnect {
         val rgbMap = createRgbMat()
 
         val dh = DepthHandlerImpl(KinnectDepthCallback { depthMmData: IntArray? ->
-            KinnectDepthTestMatCreator.createMap(depthMat, depthMmData!!)
+            KinectDepthTestMatCreator.createMap(depthMat, depthMmData!!)
             HighGui.imshow("Depth Image", depthMat)
             HighGui.waitKey(3)
         })

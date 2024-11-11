@@ -22,10 +22,12 @@
  * Binary distributions must follow the binary distribution requirements of
  * either License.
  */
-package kinnect.freenect
+package kinect.freenect
 
-import java.nio.ByteBuffer
-
-fun interface DepthHandler {
-    fun onFrameReceived(mode: FrameMode?, frame: ByteBuffer?, timestamp: Int)
+interface Context {
+    fun numDevices(): Int
+    fun setLogLevel(level: LogLevel)
+    fun openDevice(index: Int): Device
+    fun shutdown()
+    fun selectSubdev()
 }

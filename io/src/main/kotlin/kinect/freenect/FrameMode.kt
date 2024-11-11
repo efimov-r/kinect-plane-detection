@@ -1,8 +1,7 @@
-package kinnect.freenect
+package kinect.freenect
 
 import com.sun.jna.Structure
-import kinnect.freenect.DepthFormat.Companion.fromInt
-import java.util.*
+import kinect.freenect.DepthFormat.Companion.fromInt
 
 
 open class FrameMode : Structure() {

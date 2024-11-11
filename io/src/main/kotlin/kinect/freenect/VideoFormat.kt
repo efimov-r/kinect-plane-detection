@@ -1,4 +1,4 @@
-package kinnect.freenect
+package kinect.freenect
 
 enum class VideoFormat(private val value: Int) {
     RGB(0),

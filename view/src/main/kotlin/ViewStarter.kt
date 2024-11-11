@@ -21,11 +21,11 @@ object ViewStarter {
         val cubeComplect = createCubeComplect(RunSinRGB(0.0f, MESH_WIDTH, MESH_HEIGHT), MESH_WIDTH * MESH_HEIGHT, 0.02f)
         val pointComplect = createPointComplect(RunSinRGB(0.0f, MESH_WIDTH, MESH_HEIGHT), MESH_WIDTH * MESH_HEIGHT)
         val trianglesComplect = createTrianglesComplect(RunTrianglesRGB(), 60)
-        val kinnectComplect = createTrianglesComplect(KinnectModelCreator(0.01f), sizeBuf)
+        val kinectComplect = createTrianglesComplect(KinnectModelCreator(0.01f), sizeBuf)
         //        v3dComplects.add(cubeComplect);
 //        v3dComplects.add(pointComplect);
 //        v3dComplects.add(trianglesComplect);
-        v3dComplects.add(kinnectComplect)
+        v3dComplects.add(kinectComplect)
         SwingUtilities.invokeLater(object : Runnable {
             override fun run() {
                 ViewFrame(creator, v3dComplects)

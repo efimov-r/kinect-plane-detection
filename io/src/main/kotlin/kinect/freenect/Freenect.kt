@@ -1,4 +1,4 @@
-package kinnect.freenect
+package kinect.freenect
 
 import com.sun.jna.*
 import com.sun.jna.ptr.PointerByReference
@@ -6,7 +6,6 @@ import era.utils.files.KiLogger
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.nio.DoubleBuffer
 
 object Freenect : Library {
     init {

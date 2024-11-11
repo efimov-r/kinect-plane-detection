@@ -1,4 +1,4 @@
-package kinnect.freenect
+package kinect.freenect
 
 enum class Resolution(private val value: Int) {
     LOW(0),

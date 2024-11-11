@@ -1,4 +1,4 @@
-package kinnect.freenect
+package kinect.freenect
 
 interface Device {
     fun setDepthFormat(fmt: DepthFormat?)

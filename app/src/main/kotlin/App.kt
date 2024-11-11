@@ -1,9 +1,9 @@
 package era.app
 
-import kinnect.TestKinnect
+import kinect.TestKinect
 
 
 fun main() {
 //    ViewStarter.start();
-    TestKinnect.execute()
+    TestKinect.execute()
 }

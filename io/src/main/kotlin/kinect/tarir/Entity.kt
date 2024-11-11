@@ -1,4 +1,4 @@
-package kinnect.tarir
+package kinect.tarir
 
 class Entity {
     val t: Int

@@ -1,7 +1,7 @@
-package kinnect.handlers
+package kinect.handlers
 
-import kinnect.freenect.FrameMode
-import kinnect.freenect.VideoHandler
+import kinect.freenect.FrameMode
+import kinect.freenect.VideoHandler
 import org.opencv.core.CvType
 import org.opencv.core.Mat
 import java.nio.ByteBuffer

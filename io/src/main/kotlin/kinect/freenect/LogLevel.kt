@@ -1,4 +1,4 @@
-package kinnect.freenect
+package kinect.freenect
 
 enum class LogLevel(private val value: Int) {
     FATAL(0),
