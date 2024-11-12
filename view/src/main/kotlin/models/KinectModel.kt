@@ -11,10 +11,10 @@ class KinectModel(private val multi: Float) : V3dModel {
         index = 0
         createBodyModel(buffer)
 
-        createCircle(buffer, 0.1f, -30f, 10f, COLOR_2)
-        createCircle(buffer, 0.1f, 20f, 10f, COLOR_2)
-        createCircle(buffer, 0.1f, 45f, 10f, COLOR_2)
-        createCircle(buffer, 0.1f, -5f, 1f, COLOR_3)
+        createCircle(buffer, 0.1f, 30f, 10f, COLOR_2)
+        createCircle(buffer, 0.1f, -20f, 10f, COLOR_2)
+        createCircle(buffer, 0.1f, -45f, 10f, COLOR_2)
+        createCircle(buffer, 0.1f, 5f, 1f, COLOR_3)
         return index / 4
     }
 

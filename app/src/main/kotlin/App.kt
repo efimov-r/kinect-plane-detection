@@ -5,8 +5,10 @@ import kinect.Kinect
 import kinect.handlers.DepthHandlerImpl
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
+import models.KinectModel
 import v2d.ViewFrame
 import v3d.eventlistener.V3dGlMultiEventListener.V3dComplect
+import v3d.utils.ComplectFactory
 import v3d.utils.ComplectFactory.createPointComplect
 import v3d.utils.GLCapabilitiesCreator
 import javax.swing.SwingUtilities
@@ -28,6 +30,7 @@ private fun start(complect: V3dComplect) {
 
     val v3dComplects: MutableList<V3dComplect> = ArrayList<V3dComplect>()
     v3dComplects.add(complect)
+    v3dComplects.add(ComplectFactory.createModelComplect(KinectModel(1f/AppConstants.MAX_MM_ON_V3D)))
     SwingUtilities.invokeLater(object : Runnable {
         override fun run() {
             ViewFrame(creator, v3dComplects)

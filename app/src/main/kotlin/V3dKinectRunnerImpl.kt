@@ -16,9 +16,9 @@ class V3dKinectRunnerImpl(val channel: Channel<Cloud>) : V3dRunner {
                 val index = 4 * i
 
                 if(glob != null) {
-                    vertices.put(index, glob.x.toFloat() / 7000)
-                    vertices.put(index + 1, -glob.y.toFloat() / 7000)
-                    vertices.put(index + 2, glob.z.toFloat() / 7000)
+                    vertices.put(index, glob.z.toFloat() / AppConstants.MAX_MM_ON_V3D)
+                    vertices.put(index + 1, glob.x.toFloat() / AppConstants.MAX_MM_ON_V3D)
+                    vertices.put(index + 2, glob.y.toFloat() / AppConstants.MAX_MM_ON_V3D)
                     vertices.put(index + 3, 1f)
                     countVertex++
                 }
