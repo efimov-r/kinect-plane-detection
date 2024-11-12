@@ -1,6 +1,6 @@
 package kinect
 
-object Constant {
+object KinectConstant {
     const val KINECT_DEPTH_ROWS: Int = 480
     const val KINECT_DEPTH_COLS: Int = 640
     const val KINECT_DEPTH_MIN: Int = 345

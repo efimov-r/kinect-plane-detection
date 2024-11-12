@@ -1,39 +1,44 @@
 package era.app
 
-import era.kinect.cloud.Cloud
+import ToViewText
+import cloud.realization.InCloud
+import cloud.realization.ToViewCloud
+import era.utils.files.KiLogger
 import kinect.Kinect
-import kinect.handlers.DepthHandlerImpl
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import models.KinectModel
-import v2d.ViewFrame
-import v3d.eventlistener.V3dGlMultiEventListener.V3dComplect
-import v3d.utils.ComplectFactory
-import v3d.utils.ComplectFactory.createPointComplect
-import v3d.utils.GLCapabilitiesCreator
-import javax.swing.SwingUtilities
+import kotlinx.coroutines.withContext
 
 
 fun main() {
+    KiLogger.inf("main start")
     runBlocking {
-        val channel = Channel<Cloud>(Channel.CONFLATED)
+        val channelSensor = Channel<InCloud>(Channel.CONFLATED)
+        val channelToView = Channel<ToViewCloud>(Channel.CONFLATED)
+        val channelText = Channel<ToViewText>(Channel.CONFLATED)
 
-        Kinect.init(DepthHandlerImpl(channel))
-
-        start(createPointComplect(V3dKinectRunnerImpl(channel), 640*480))
+        Kinect.init(channelSensor)
+        launch{
+            mainJob(channelSensor, channelToView, channelText)
+        }
+        ViewInitor.init(channelToView, channelText)
     }
-    println("done")
 }
 
-private fun start(complect: V3dComplect) {
-    val creator = GLCapabilitiesCreator()
-
-    val v3dComplects: MutableList<V3dComplect> = ArrayList<V3dComplect>()
-    v3dComplects.add(complect)
-    v3dComplects.add(ComplectFactory.createModelComplect(KinectModel(1f/AppConstants.MAX_MM_ON_V3D)))
-    SwingUtilities.invokeLater(object : Runnable {
-        override fun run() {
-            ViewFrame(creator, v3dComplects)
-        }
-    })
+private suspend fun mainJob(channelSensor: Channel<InCloud>, channelToView: Channel<ToViewCloud>, channelText: Channel<ToViewText>) {
+//    withContext(Dispatchers.Default){
+//        launch{
+            var toViewCloud: ToViewCloud? = null
+            for(sens in channelSensor) {
+                toViewCloud = ToViewCloud(sens.size)
+                for (i in 0..<sens.globs.size) {
+                    toViewCloud.setGlob(i, sens.globs.get(i)!!)
+                }
+                channelToView.trySend(toViewCloud)
+                channelText.trySend(ToViewText(sens.globs.get(2000)!!.z.toString()))
+            }
+//        }
+//    }
 }

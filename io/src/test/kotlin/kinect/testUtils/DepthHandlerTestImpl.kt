@@ -1,7 +1,7 @@
 package kinect.testUtils
 
-import kinect.Constant.KINECT_DEPTH_COLS
-import kinect.Constant.KINECT_DEPTH_ROWS
+import kinect.KinectConstant.KINECT_DEPTH_COLS
+import kinect.KinectConstant.KINECT_DEPTH_ROWS
 import kinect.freenect.DepthHandler
 import kinect.freenect.FrameMode
 import kinect.util.Tari.Companion.getTari

@@ -1,19 +1,19 @@
 package kinect.handlers
 
-import era.kinect.cloud.Cloud
+import cloud.realization.InCloud
 import era.kinect.cloud.Glob
 import kinect.util.ToCloud
-import kinect.Constant.KINECT_DEPTH_COLS
-import kinect.Constant.KINECT_DEPTH_ROWS
+import kinect.KinectConstant.KINECT_DEPTH_COLS
+import kinect.KinectConstant.KINECT_DEPTH_ROWS
 import kinect.freenect.DepthHandler
 import kinect.freenect.FrameMode
 import kinect.util.Tari.Companion.getTari
 import java.nio.ByteBuffer
 import kotlinx.coroutines.channels.Channel
 
-class DepthHandlerImpl(val channel: Channel<Cloud>) : DepthHandler {
+class DepthHandlerImpl(val channel: Channel<InCloud>) : DepthHandler {
     private val depthDataBytes: ByteArray = ByteArray(KINECT_DEPTH_COLS * KINECT_DEPTH_ROWS * 2)
-    private val cloud: Cloud = Cloud(KINECT_DEPTH_ROWS * KINECT_DEPTH_COLS)
+    private val cloud: InCloud = InCloud(KINECT_DEPTH_ROWS * KINECT_DEPTH_COLS)
 
     override fun onFrameReceived(mode: FrameMode?, frame: ByteBuffer?, timestamp: Int) {
         frame!!.position(0).get(depthDataBytes)
