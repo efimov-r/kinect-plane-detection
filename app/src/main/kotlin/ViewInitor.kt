@@ -3,10 +3,10 @@ package era.app
 import ToViewText
 import cloud.realization.ToViewCloud
 import kinect.KinectConstant
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import models.KinectModel
 import v2d.ViewFrame
 import v3d.eventlistener.V3dGlMultiEventListener.V3dComplect
@@ -17,7 +17,7 @@ import javax.swing.SwingUtilities
 
 class ViewInitor {
     companion object {
-        suspend fun init(channelToView: Channel<ToViewCloud>, channelText: Channel<ToViewText>) {
+        fun init(scope: CoroutineScope, channelToView: Channel<ToViewCloud>, channelText: Channel<ToViewText>) {
             var viewFrame: ViewFrame? = null
 
             val creator = GLCapabilitiesCreator()
@@ -31,11 +31,9 @@ class ViewInitor {
                 }
             })
 
-            withContext(Dispatchers.IO){ //todo
-                launch{
-                    for(text in channelText) {
-                        viewFrame?.setText(text.text)
-                    }
+            scope.launch(Dispatchers.IO){
+                for(text in channelText) {
+                    viewFrame?.setText(text.text)
                 }
             }
         }
