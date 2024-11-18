@@ -19,6 +19,7 @@ class V3dGlMultiEventListener(
         var runner: V3dRunner? = null
         var vboHelper: VBOHelper? = null
         var shaders: MutableList<Shader>? = null
+        var countPointsRender: Int = 0
     }
 
     private var initialized = false
@@ -76,16 +77,18 @@ class V3dGlMultiEventListener(
         gl.glClear(GL.GL_COLOR_BUFFER_BIT or GL.GL_DEPTH_BUFFER_BIT)
         for (v3dComplect in v3dComplects) {
             val floatBuffer = v3dComplect.vboHelper!!.mapBuffer(gl)
-            var countPointsRender = 0
             if(floatBuffer != null) {
-                countPointsRender = v3dComplect.runner!!.setVertexBuffer(floatBuffer)
+                val countPointsRenderLocal = v3dComplect.runner!!.setVertexBuffer(floatBuffer)
                 v3dComplect.vboHelper!!.unmapBuffer(gl)
+                if(countPointsRenderLocal != null) {
+                    v3dComplect.countPointsRender = countPointsRenderLocal
+                }
             }
 
 
             for (shader in v3dComplect.shaders!!) {
                 shader.setShader(gl, modelviewMatrix)
-                v3dComplect.vboHelper!!.render(gl, countPointsRender)
+                v3dComplect.vboHelper!!.render(gl, v3dComplect.countPointsRender)
             }
         }
 

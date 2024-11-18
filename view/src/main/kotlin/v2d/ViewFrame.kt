@@ -37,7 +37,8 @@ class ViewFrame(glCapabilitiesCreator: GLCapabilitiesCreator, v3dComplects: Muta
         frame.pack()
         frame.setVisible(true)
         frame.setTitle("It is title")
-        frame.setSize(frame.maximumSize.width, frame.maximumSize.height)
+//        frame.setSize(frame.maximumSize.width, frame.maximumSize.height)
+        frame.setSize(2000, 1200)
         glComponentForView.requestFocus()
     }
 

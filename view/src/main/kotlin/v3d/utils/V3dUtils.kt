@@ -1,6 +1,7 @@
 package v3d.utils
 
 import com.jogamp.opengl.util.Animator
+import com.jogamp.opengl.util.AnimatorBase
 import v3d.eventlistener.CallbackJkiEventListener
 import java.io.BufferedReader
 import java.io.FileReader
@@ -97,7 +98,7 @@ object V3dUtils {
      *
      * am Animator the animator to stop
      */
-    fun runExit(animatorEx: Animator?) {
+    fun runExit(animatorEx: AnimatorBase?) {
         Thread(object : Runnable {
             override fun run() {
                 if (animatorEx != null) {

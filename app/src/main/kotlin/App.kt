@@ -1,8 +1,8 @@
 package era.app
 
 import ToViewText
-import cloud.realization.InCloud
-import cloud.realization.ToViewCloud
+import cloud.realization.BufferedChannel
+import cloud.realization.CloudOfSensor
 import era.utils.files.KiLogger
 import kinect.Kinect
 import kotlinx.coroutines.channels.Channel
@@ -12,12 +12,19 @@ import kotlinx.coroutines.runBlocking
 fun main() {
     KiLogger.inf("main start")
     runBlocking {
-        val channelSensor = Channel<InCloud>(Channel.CONFLATED)
-        val channelToView = Channel<ToViewCloud>(Channel.CONFLATED)
         val channelText = Channel<ToViewText>(Channel.CONFLATED)
 
-        Kinect.init(channelSensor)
-        Job.execute(this, channelSensor, channelToView, channelText)
-        ViewInitor.init(this, channelToView, channelText)
+        val formSensorChannel = BufferedChannel {
+            return@BufferedChannel CloudOfSensor(640*480, it)
+        }
+
+        val toViewChannel = BufferedChannel {
+            return@BufferedChannel CloudOfSensor(640*480, it)
+        }
+
+        Kinect.init(formSensorChannel)
+        JobBuf.execute(this, formSensorChannel, toViewChannel, channelText)
+        ViewInitor.init(this, toViewChannel, channelText)
+
     }
 }

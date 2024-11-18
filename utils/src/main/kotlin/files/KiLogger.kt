@@ -59,7 +59,17 @@ class KiLogger private constructor(fileName: String) {
             inf("device $dev: $inf")
         }
 
-        fun err(err: kotlin.String) {
+        fun warn(err: String) {
+            if (instance == null) {
+                instance = KiLogger("${Now.getDateTimeStr()}.log")
+            }
+            val log = "WARNING: ${Now.getDateTimeStr()}: $err"
+            instance!!.writeLn(log)
+            instance!!.flush()
+            println(log)
+        }
+
+        fun err(err: String) {
             if (instance == null) {
                 instance = KiLogger("${Now.getDateTimeStr()}.log")
             }

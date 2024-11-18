@@ -1,15 +1,15 @@
 package kinect
 
-import cloud.realization.InCloud
+import cloud.realization.BufferedChannel
+import cloud.realization.CloudOfSensor
 import era.utils.files.KiLogger
 import kinect.freenect.DepthFormat
 import kinect.freenect.Freenect
 import kinect.handlers.DepthHandlerImpl
-import kotlinx.coroutines.channels.Channel
 
 class Kinect {
     companion object {
-        fun init(channel: Channel<InCloud>) {
+        fun init(channel: BufferedChannel<CloudOfSensor>) {
             try {
                 val tmpContext = Freenect.createContext()
                 tmpContext.selectSubdev()

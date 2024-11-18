@@ -1,9 +1,19 @@
 package era.kinect.cloud
 
 data class Glob (
-    val xPos: Int = -1,
-    val yPos: Int = -1,
-    val z: Int,
-    val y: Int,
-    val x: Int
-)
+    var z: Short,
+    var y: Short,
+    var x: Short
+) {
+    fun copyOf(glob: Glob) {
+        this.x = glob.x
+        this.y = glob.y
+        this.z = glob.z
+    }
+
+    companion object {
+        fun createEmpty(): Glob {
+            return Glob(0, 0, 0)
+        }
+    }
+}

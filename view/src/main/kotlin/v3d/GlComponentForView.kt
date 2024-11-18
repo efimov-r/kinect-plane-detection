@@ -2,7 +2,8 @@ package v3d
 
 import com.jogamp.opengl.GLCapabilities
 import com.jogamp.opengl.awt.GLCanvas
-import com.jogamp.opengl.util.Animator
+import com.jogamp.opengl.util.AnimatorBase
+import com.jogamp.opengl.util.FPSAnimator
 import v3d.eventlistener.CallbackJkiEventListener
 import v3d.eventlistener.V3dGlMultiEventListener
 import v3d.eventlistener.V3dGlMultiEventListener.V3dComplect
@@ -18,7 +19,7 @@ class GlComponentForView(
     callback: GlComponentCallback,
     v3dComplects: MutableList<V3dComplect>
 ) {
-    private val animator: Animator
+    private var animator: AnimatorBase? = null
     val glComponent: GLCanvas
 
     fun interface GlComponentCallback {
@@ -55,8 +56,8 @@ class GlComponentForView(
             )!!
         )
 
-        animator = Animator(glComponent)
-        animator.start()
+        animator = FPSAnimator(glComponent, 40)
+        animator!!.start()
 
         glComponent.setPreferredSize(Dimension(800, 800))
     }

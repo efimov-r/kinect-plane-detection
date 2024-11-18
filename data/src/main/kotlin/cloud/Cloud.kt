@@ -1,4 +1,0 @@
-package cloud
-
-interface Cloud {
-}
