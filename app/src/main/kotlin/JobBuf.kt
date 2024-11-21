@@ -1,8 +1,9 @@
 package era.app
 
-import ToViewText
-import cloud.realization.BufferedChannel
-import cloud.realization.CloudOfSensor
+import cloud.entities.ToViewText
+import cloud.BufferedChannel
+import cloud.databuffer.CloudForView
+import cloud.databuffer.CloudOfSensor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -13,7 +14,7 @@ class JobBuf {
     companion object{
         fun execute(scope: CoroutineScope,
                     channelSensor: BufferedChannel<CloudOfSensor>,
-                    channelToView: BufferedChannel<CloudOfSensor>,
+                    channelToView: BufferedChannel<CloudForView>,
                     channelText: Channel<ToViewText>) {
             scope.launch(Dispatchers.IO){
                 while(true) {
@@ -33,9 +34,12 @@ class JobBuf {
             }
         }
 
-        private fun doJobInternal(inp: CloudOfSensor, outp: CloudOfSensor) {
+        private fun doJobInternal(inp: CloudOfSensor, outp: CloudForView) {
             inp.editData { glob, id ->
-                outp.setDataGlob(id, glob.x, glob.y, glob.z)
+                outp.setDataGlob(id,
+                    glob.x.toFloat()/ AppConstants.MAX_MM_ON_V3D,
+                    glob.y.toFloat()/ AppConstants.MAX_MM_ON_V3D,
+                    glob.z.toFloat()/ AppConstants.MAX_MM_ON_V3D)
             }
         }
     }

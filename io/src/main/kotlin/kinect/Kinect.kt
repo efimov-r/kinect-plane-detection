@@ -1,7 +1,7 @@
 package kinect
 
-import cloud.realization.BufferedChannel
-import cloud.realization.CloudOfSensor
+import cloud.BufferedChannel
+import cloud.databuffer.CloudOfSensor
 import era.utils.files.KiLogger
 import kinect.freenect.DepthFormat
 import kinect.freenect.Freenect

@@ -1,8 +1,8 @@
 package era.app
 
-import ToViewText
-import cloud.realization.BufferedChannel
-import cloud.realization.CloudOfSensor
+import cloud.BufferedChannel
+import cloud.databuffer.CloudForView
+import cloud.entities.ToViewText
 import kinect.KinectConstant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -10,6 +10,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import models.KinectModel
 import v2d.ViewFrame
+import v3d.eventlistener.V3dGlMultiEventListener
 import v3d.eventlistener.V3dGlMultiEventListener.V3dComplect
 import v3d.utils.ComplectFactory
 import v3d.utils.ComplectFactory.createPointComplect
@@ -18,7 +19,7 @@ import javax.swing.SwingUtilities
 
 class ViewInitor {
     companion object {
-        fun init(scope: CoroutineScope, channelToView: BufferedChannel<CloudOfSensor>, channelText: Channel<ToViewText>) {
+        fun init(scope: CoroutineScope, channelToView: BufferedChannel<CloudForView>, channelText: Channel<ToViewText>) {
 
             val v3dComplects: MutableList<V3dComplect> = ArrayList<V3dComplect>()
             v3dComplects.add(createPointComplect(V3dCloudRunnerImpl(channelToView), KinectConstant.KINECT_DEPTH_COLS * KinectConstant.KINECT_DEPTH_ROWS))
@@ -26,9 +27,10 @@ class ViewInitor {
 
             var viewFrame: ViewFrame? = null
             val creator = GLCapabilitiesCreator()
+            val eventListener = V3dGlMultiEventListener(v3dComplects)
             SwingUtilities.invokeLater(object : Runnable {
                 override fun run() {
-                    viewFrame = ViewFrame(creator, v3dComplects)
+                    viewFrame = ViewFrame(creator, eventListener)
                 }
             })
 

@@ -2,7 +2,6 @@ package v3d.utils
 
 import com.jogamp.opengl.util.Animator
 import com.jogamp.opengl.util.AnimatorBase
-import v3d.eventlistener.CallbackJkiEventListener
 import java.io.BufferedReader
 import java.io.FileReader
 import java.io.IOException
@@ -10,57 +9,34 @@ import java.util.*
 import javax.swing.JOptionPane
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.system.exitProcess
 
 object V3dUtils {
-    fun showErrorMess(title: String?, text: String?, callbackEventListener: CallbackJkiEventListener) {
-        Thread(object : Runnable {
-            override fun run() {
-                JOptionPane.showMessageDialog(
-                    null,
-                    text,
-                    title, JOptionPane.ERROR_MESSAGE
-                )
-                callbackEventListener.animatorStop()
-            }
-        }).start()
-    }
-
-//    fun getVertexShader(name: String?): Array<String?> {
-//        val vertex = readFile("src/main/resources/shaders/vertex/" + name + ".gl")
-//        return arrayOf<String>(vertex)
-//    }
-//
-//    fun getFragmentShader(name: String?): Array<String?> {
-//        val fragment = readFile("src/main/resources/shaders/fragment/" + name + ".gl")
-//        return arrayOf<String>(fragment)
+//    fun showErrorMess(title: String?, text: String?, callbackEventListener: CallbackJkiEventListener) {
+//        Thread(object : Runnable {
+//            override fun run() {
+//                JOptionPane.showMessageDialog(
+//                    null,
+//                    text,
+//                    title, JOptionPane.ERROR_MESSAGE
+//                )
+//                callbackEventListener.animatorStop()
+//            }
+//        }).start()
 //    }
 
-    private fun readFile(fileName: String): String {
-        var br: BufferedReader? = null
-        try {
-            br = BufferedReader(FileReader(fileName))
-            val sb = StringBuilder()
-            var line: String? = null
-            while (true) {
-                line = br.readLine()
-                if (line == null) {
-                    break
-                }
-                sb.append(line + "\n")
-            }
-            return sb.toString()
-        } catch (e: IOException) {
-            e.printStackTrace()
-            return ""
-        } finally {
-            if (br != null) {
-                try {
-                    br.close()
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                }
-            }
-        }
+    fun showErrorMess(title: String?, text: String?, animator: AnimatorBase?) {
+        Thread {
+            JOptionPane.showMessageDialog(
+                null,
+                text,
+                title, JOptionPane.ERROR_MESSAGE
+            )
+            Thread {
+                animator?.stop()
+                exitProcess(0)
+            }.start()
+        }.start()
     }
 
     /**

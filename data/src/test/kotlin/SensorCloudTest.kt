@@ -1,5 +1,5 @@
-import cloud.realization.BufferedChannel
-import cloud.realization.CloudOfSensor
+import cloud.BufferedChannel
+import cloud.databuffer.CloudOfSensor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

@@ -4,6 +4,7 @@ import com.jogamp.opengl.GL
 import com.jogamp.opengl.GL3
 import com.jogamp.opengl.GLAutoDrawable
 import com.jogamp.opengl.GLEventListener
+import com.jogamp.opengl.util.AnimatorBase
 import v3d.V3dRunner
 import v3d.shaders.Shader
 import v3d.utils.FpsInformator
@@ -11,9 +12,7 @@ import v3d.utils.V3dUtils.showErrorMess
 import v3d.vbos.VBOHelper
 
 class V3dGlMultiEventListener(
-    private val callbackEventListener: CallbackJkiEventListener,
-    private val v3dComplects: MutableList<V3dComplect>,
-    private val fpsInformator: FpsInformator
+    private val v3dComplects: MutableList<V3dComplect>
 ) : GLEventListener {
     class V3dComplect {
         var runner: V3dRunner? = null
@@ -25,6 +24,9 @@ class V3dGlMultiEventListener(
     private var initialized = false
 
     private var modelviewMatrix = FloatArray(16)
+
+    var animator: AnimatorBase? = null
+    var fpsInformator: FpsInformator? = null
 
     fun setModelviewMatrix(modelviewMatrix: FloatArray) {
         this.modelviewMatrix = modelviewMatrix
@@ -53,7 +55,7 @@ class V3dGlMultiEventListener(
                 showErrorMess(
                     "Unavailable extension",
                     "GL_ARB_vertex_buffer_object extension not available",
-                    callbackEventListener
+                    animator
                 )
             }
 
@@ -92,7 +94,7 @@ class V3dGlMultiEventListener(
             }
         }
 
-        fpsInformator.informate(callbackEventListener)
+        fpsInformator?.informate()
     }
 
     override fun reshape(drawable: GLAutoDrawable, x: Int, y: Int, width: Int, height: Int) {

@@ -1,7 +1,7 @@
 package kinect.handlers
 
-import cloud.realization.BufferedChannel
-import cloud.realization.CloudOfSensor
+import cloud.BufferedChannel
+import cloud.databuffer.CloudOfSensor
 import kinect.KinectConstant.KINECT_DEPTH_COLS
 import kinect.KinectConstant.KINECT_DEPTH_ROWS
 import kinect.freenect.DepthHandler

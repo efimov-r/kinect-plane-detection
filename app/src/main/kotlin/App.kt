@@ -1,8 +1,9 @@
 package era.app
 
-import ToViewText
-import cloud.realization.BufferedChannel
-import cloud.realization.CloudOfSensor
+import cloud.entities.ToViewText
+import cloud.BufferedChannel
+import cloud.databuffer.CloudForView
+import cloud.databuffer.CloudOfSensor
 import era.utils.files.KiLogger
 import kinect.Kinect
 import kotlinx.coroutines.channels.Channel
@@ -19,7 +20,7 @@ fun main() {
         }
 
         val toViewChannel = BufferedChannel {
-            return@BufferedChannel CloudOfSensor(640*480, it)
+            return@BufferedChannel CloudForView(1, 1, 640*480, 1, it)
         }
 
         Kinect.init(formSensorChannel)

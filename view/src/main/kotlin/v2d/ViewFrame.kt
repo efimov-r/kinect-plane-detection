@@ -1,8 +1,8 @@
 package v2d
 
 import v3d.GlComponentForView
-import v3d.GlComponentForView.GlComponentCallback
-import v3d.eventlistener.V3dGlMultiEventListener.V3dComplect
+import v3d.eventlistener.V3dGlMultiEventListener
+import v3d.utils.FpsInformator
 import v3d.utils.GLCapabilitiesCreator
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -14,17 +14,20 @@ import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.JTextArea
 
-class ViewFrame(glCapabilitiesCreator: GLCapabilitiesCreator, v3dComplects: MutableList<V3dComplect>) {
+class ViewFrame(glCapabilitiesCreator: GLCapabilitiesCreator, eventListener: V3dGlMultiEventListener) {
     private val textArea: JTextArea
 
     init {
         textArea = JTextArea()
 
         val frame: Frame = JFrame("View sample")
+
+        eventListener.fpsInformator = FpsInformator{
+            frame.title = it
+        }
         val glComponentForView = GlComponentForView(
             glCapabilitiesCreator.capabilities,
-            GlComponentCallback { title: String? -> frame.setTitle(title) },
-            v3dComplects
+            eventListener
         )
         frame.addWindowListener(object : WindowAdapter() {
             override fun windowClosing(e: WindowEvent?) {

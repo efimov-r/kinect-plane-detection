@@ -1,13 +1,11 @@
 package v3d.utils
 
-import v3d.eventlistener.CallbackJkiEventListener
 
-
-class FpsInformator {
+class FpsInformator(val callback: (text: String) -> Unit) {
     private var prevTimeNS: Long = -1
     private var step = 0
 
-    fun informate(callback: CallbackJkiEventListener) {
+    fun informate() {
         step++
         val currentTime = System.nanoTime()
         if (prevTimeNS == -1L) {
@@ -18,7 +16,7 @@ class FpsInformator {
             val fps = (diff / 1e9) * step
             var t = "JOCL / JOGL interaction sample - "
             t += " mode: " + String.format("%.2f", fps) + " FPS"
-            callback.setTitle(t)
+            callback(t)
             prevTimeNS = currentTime
             step = 0
         }
