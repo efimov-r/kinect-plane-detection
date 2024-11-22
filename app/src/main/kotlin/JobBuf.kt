@@ -35,11 +35,13 @@ class JobBuf {
         }
 
         private fun doJobInternal(inp: CloudOfSensor, outp: CloudForView) {
+            outp.pointData.clear()
             inp.editData { glob, id ->
-                outp.setDataGlob(id,
-                    glob.x.toFloat()/ AppConstants.MAX_MM_ON_V3D,
-                    glob.y.toFloat()/ AppConstants.MAX_MM_ON_V3D,
-                    glob.z.toFloat()/ AppConstants.MAX_MM_ON_V3D)
+                outp.pointData.add {
+                    it.z = glob.z.toFloat()/ AppConstants.MAX_MM_ON_V3D
+                    it.x = glob.x.toFloat()/ AppConstants.MAX_MM_ON_V3D
+                    it.y = glob.y.toFloat()/ AppConstants.MAX_MM_ON_V3D
+                }
             }
         }
     }

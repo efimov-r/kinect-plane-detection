@@ -22,12 +22,12 @@ class ViewInitor {
         fun init(scope: CoroutineScope, channelToView: BufferedChannel<CloudForView>, channelText: Channel<ToViewText>) {
 
             val v3dComplects: MutableList<V3dComplect> = ArrayList<V3dComplect>()
-            v3dComplects.add(createPointComplect(V3dCloudRunnerImpl(channelToView), KinectConstant.KINECT_DEPTH_COLS * KinectConstant.KINECT_DEPTH_ROWS))
+            v3dComplects.add(createPointComplect(V3dCloudRunnerImpl(), KinectConstant.KINECT_DEPTH_COLS * KinectConstant.KINECT_DEPTH_ROWS))
             v3dComplects.add(ComplectFactory.createModelComplect(KinectModel(1f/AppConstants.MAX_MM_ON_V3D)))
 
             var viewFrame: ViewFrame? = null
             val creator = GLCapabilitiesCreator()
-            val eventListener = V3dGlMultiEventListener(v3dComplects)
+            val eventListener = V3dGlMultiEventListener(v3dComplects, channelToView)
             SwingUtilities.invokeLater(object : Runnable {
                 override fun run() {
                     viewFrame = ViewFrame(creator, eventListener)

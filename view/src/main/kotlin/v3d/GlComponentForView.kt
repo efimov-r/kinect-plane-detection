@@ -37,7 +37,7 @@ class GlComponentForView(
             )!!
         )
 
-        animator = FPSAnimator(glComponent, 40)
+        animator = FPSAnimator(glComponent, 120)
         eventListener.animator = animator
         animator!!.start()
 

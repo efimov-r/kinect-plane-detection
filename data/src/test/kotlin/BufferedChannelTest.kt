@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 import java.util.*
 import kotlin.test.assertEquals
 
-internal class SensorCloudTest {
+internal class BufferedChannelTest {
     @Test
     fun testWriteMess() {
         val start2 = Date().time

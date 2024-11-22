@@ -1,5 +1,7 @@
 package v3d.eventlistener
 
+import cloud.BufferedChannel
+import cloud.databuffer.CloudForView
 import com.jogamp.opengl.GL
 import com.jogamp.opengl.GL3
 import com.jogamp.opengl.GLAutoDrawable
@@ -10,9 +12,11 @@ import v3d.shaders.Shader
 import v3d.utils.FpsInformator
 import v3d.utils.V3dUtils.showErrorMess
 import v3d.vbos.VBOHelper
+import kotlinx.coroutines.runBlocking
 
 class V3dGlMultiEventListener(
-    private val v3dComplects: MutableList<V3dComplect>
+    private val v3dComplects: MutableList<V3dComplect>,
+    private val channelToView: BufferedChannel<CloudForView>
 ) : GLEventListener {
     class V3dComplect {
         var runner: V3dRunner? = null
@@ -75,26 +79,32 @@ class V3dGlMultiEventListener(
     override fun display(drawable: GLAutoDrawable) {
         if (!initialized) return
 
-        val gl = drawable.getGL() as GL3
-        gl.glClear(GL.GL_COLOR_BUFFER_BIT or GL.GL_DEPTH_BUFFER_BIT)
-        for (v3dComplect in v3dComplects) {
-            val floatBuffer = v3dComplect.vboHelper!!.mapBuffer(gl)
-            if(floatBuffer != null) {
-                val countPointsRenderLocal = v3dComplect.runner!!.setVertexBuffer(floatBuffer)
-                v3dComplect.vboHelper!!.unmapBuffer(gl)
-                if(countPointsRenderLocal != null) {
-                    v3dComplect.countPointsRender = countPointsRenderLocal
+        runBlocking{
+            val lastDataForRead = channelToView.getLastDataForRead() ?: return@runBlocking
+
+            val gl = drawable.getGL() as GL3
+            gl.glClear(GL.GL_COLOR_BUFFER_BIT or GL.GL_DEPTH_BUFFER_BIT)
+            for (v3dComplect in v3dComplects) {
+                val floatBuffer = v3dComplect.vboHelper!!.mapBuffer(gl)
+                if(floatBuffer != null) {
+                    val countPointsRenderLocal = v3dComplect.runner!!.setVertexBuffer(floatBuffer, lastDataForRead)
+                    v3dComplect.vboHelper!!.unmapBuffer(gl)
+                    if(countPointsRenderLocal != null) {
+                        v3dComplect.countPointsRender = countPointsRenderLocal
+                    }
+                }
+
+
+                for (shader in v3dComplect.shaders!!) {
+                    shader.setShader(gl, modelviewMatrix)
+                    v3dComplect.vboHelper!!.render(gl, v3dComplect.countPointsRender)
                 }
             }
 
+            channelToView.endRead(lastDataForRead)
 
-            for (shader in v3dComplect.shaders!!) {
-                shader.setShader(gl, modelviewMatrix)
-                v3dComplect.vboHelper!!.render(gl, v3dComplect.countPointsRender)
-            }
+            fpsInformator?.informate()
         }
-
-        fpsInformator?.informate()
     }
 
     override fun reshape(drawable: GLAutoDrawable, x: Int, y: Int, width: Int, height: Int) {
