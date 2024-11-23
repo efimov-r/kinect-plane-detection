@@ -7,13 +7,13 @@ import v3d.eventlistener.V3dModelComplect
 import v3d.shaders.V3dGeometryCubeLineShader
 import v3d.shaders.V3dGeometryCubeShader
 import v3d.shaders.V3dPointsShader
-import v3d.vbos.VBOModelHelper
-import v3d.vbos.VBOPointsHelper
-import v3d.vbos.VBOTriangleHelper
+import v3d.vbos.model.VBOModelImpl
+import v3d.vbos.other.VBOPoints
+import v3d.vbos.other.VBOTriangle
 
 object ComplectFactory {
     fun createCubeComplect(runner: V3dRunner, sizeBuffer: Int, cubeSize: Float): V3dComplect {
-        val res =  V3dComplect(runner, VBOPointsHelper(sizeBuffer))
+        val res =  V3dComplect(runner, VBOPoints(sizeBuffer))
         res.shaders.add(V3dGeometryCubeShader(cubeSize / 2))
         res.shaders.add(V3dGeometryCubeLineShader(cubeSize / 2))
 
@@ -21,19 +21,19 @@ object ComplectFactory {
     }
 
     fun createPointComplect(runner: V3dRunner, sizeBuffer: Int): V3dComplect {
-        val res = V3dComplect(runner, VBOPointsHelper(sizeBuffer))
+        val res = V3dComplect(runner, VBOPoints(sizeBuffer))
         res.shaders.add(V3dPointsShader())
         return res
 
     }
 
     fun createTrianglesComplect(runner: V3dRunner, sizeBuffer: Int): V3dComplect {
-        val res = V3dComplect(runner, VBOTriangleHelper(sizeBuffer))
+        val res = V3dComplect(runner, VBOTriangle(sizeBuffer))
         res.shaders.add(V3dPointsShader())
         return res
     }
 
     fun createModelComplect(model: V3dModel): V3dModelComplect {
-        return V3dModelComplect(VBOModelHelper(model), V3dPointsShader())
+        return V3dModelComplect(VBOModelImpl(model), V3dPointsShader())
     }
 }

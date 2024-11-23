@@ -1,4 +1,4 @@
-package v3d.vbos
+package v3d.vbos.other
 
 import com.jogamp.opengl.GL
 import com.jogamp.opengl.GL3
@@ -7,7 +7,7 @@ import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import java.nio.IntBuffer
 
-class VBOTriangleHelper(private val size: Int) : VBOHelper {
+class VBOPoints(private val size: Int) : VBO {
     private var vertexArrayObject = 0
     private var vertexBufferObject = 0
 
@@ -38,7 +38,7 @@ class VBOTriangleHelper(private val size: Int) : VBOHelper {
 
     override fun render(gl: GL3, countOfVboPoint: Int) {
         gl.glBindVertexArray(vertexArrayObject)
-        gl.glDrawArrays(GL.GL_TRIANGLES, 0, countOfVboPoint)
+        gl.glDrawArrays(GL.GL_POINTS, 0, countOfVboPoint)
     }
 
     override fun mapBuffer(gl: GL3): FloatBuffer {

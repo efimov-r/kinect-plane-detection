@@ -6,10 +6,10 @@ import com.jogamp.opengl.util.AnimatorBase
 import v3d.V3dRunner
 import v3d.shaders.Shader
 import v3d.utils.V3dUtils
-import v3d.vbos.VBOHelper
+import v3d.vbos.other.VBO
 
 data class V3dComplect (var runner: V3dRunner,
-                        var vboHelper: VBOHelper,
+                        var vbo: VBO,
                         var shaders: MutableList<Shader> = ArrayList(),
                         var countPointsRender: Int = 0) {
     companion object {
@@ -21,7 +21,7 @@ data class V3dComplect (var runner: V3dRunner,
 
             V3dUtils.checkGlEx(gl, animator)
 
-            complect.vboHelper.init(gl)
+            complect.vbo.init(gl)
 
             for (shader in complect.shaders) {
                 shader.initAttributes(gl)
@@ -30,15 +30,15 @@ data class V3dComplect (var runner: V3dRunner,
 
         fun displayComplect(gl: GL3, v3dComplect: V3dComplect, cloud: CloudForView, modelviewMatrix: FloatArray) {
             if(v3dComplect.runner.needSet(cloud)) {
-                val floatBuffer = v3dComplect.vboHelper.mapBuffer(gl)
-                val countPointsRenderLocal = v3dComplect.runner.setVertexBuffer(floatBuffer!!, cloud)
-                v3dComplect.vboHelper.unmapBuffer(gl)
+                val floatBuffer = v3dComplect.vbo.mapBuffer(gl)
+                val countPointsRenderLocal = v3dComplect.runner.setVertexBuffer(floatBuffer, cloud)
+                v3dComplect.vbo.unmapBuffer(gl)
                 v3dComplect.countPointsRender = countPointsRenderLocal
             }
 
             v3dComplect.shaders.forEach { shader ->
                 shader.setShader(gl, modelviewMatrix)
-                v3dComplect.vboHelper.render(gl, v3dComplect.countPointsRender)
+                v3dComplect.vbo.render(gl, v3dComplect.countPointsRender)
             }
         }
 

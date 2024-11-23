@@ -1,17 +1,15 @@
-package v3d.vbos
+package v3d.vbos.other
 
 import com.jogamp.opengl.GL
 import com.jogamp.opengl.GL3
 import org.jocl.Sizeof
-import v3d.V3dModel
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import java.nio.IntBuffer
 
-class VBOModelHelper(private val model: V3dModel) : VBOHelper {
+class VBOTriangle(private val size: Int) : VBO {
     private var vertexArrayObject = 0
     private var vertexBufferObject = 0
-    private var countOfVboPoint: Int = 0
 
     override fun init(gl: GL3) {
         if (vertexBufferObject != 0) {
@@ -35,23 +33,21 @@ class VBOModelHelper(private val model: V3dModel) : VBOHelper {
 
         // Initialize the vertex buffer object
         gl.glBindBuffer(GL.GL_ARRAY_BUFFER, vertexBufferObject)
-        gl.glBufferData(GL.GL_ARRAY_BUFFER, (model.getSizeBuf().toLong()) * 4 * Sizeof.cl_float, null, GL.GL_STATIC_DRAW)
-
-        val byteBuffer = gl.glMapBuffer(GL.GL_ARRAY_BUFFER, GL.GL_WRITE_ONLY)
-        val asFloatBuffer = byteBuffer.order(ByteOrder.nativeOrder()).asFloatBuffer()
-        this.countOfVboPoint = model.buildModel(asFloatBuffer)
-        gl.glUnmapBuffer(GL.GL_ARRAY_BUFFER)
+        gl.glBufferData(GL.GL_ARRAY_BUFFER, (size.toLong()) * 4 * Sizeof.cl_float, null, GL.GL_DYNAMIC_DRAW)
     }
 
     override fun render(gl: GL3, countOfVboPoint: Int) {
         gl.glBindVertexArray(vertexArrayObject)
-        gl.glDrawArrays(GL.GL_TRIANGLES, 0, this.countOfVboPoint)
+        gl.glDrawArrays(GL.GL_TRIANGLES, 0, countOfVboPoint)
     }
 
-    override fun mapBuffer(gl: GL3): FloatBuffer? {
-        return null
+    override fun mapBuffer(gl: GL3): FloatBuffer {
+        gl.glBindBuffer(GL.GL_ARRAY_BUFFER, vertexBufferObject)
+        val byteBuffer = gl.glMapBuffer(GL.GL_ARRAY_BUFFER, GL.GL_WRITE_ONLY)
+        return byteBuffer.order(ByteOrder.nativeOrder()).asFloatBuffer()
     }
 
     override fun unmapBuffer(gl: GL3) {
+        gl.glUnmapBuffer(GL.GL_ARRAY_BUFFER)
     }
 }
