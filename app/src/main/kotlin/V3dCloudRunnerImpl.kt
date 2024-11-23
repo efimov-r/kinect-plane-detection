@@ -5,10 +5,12 @@ import v3d.V3dRunner
 import java.nio.FloatBuffer
 
 class V3dCloudRunnerImpl : V3dRunner {
-    override fun setVertexBuffer(buffer: FloatBuffer, data: CloudForView): Int? {
-        var countVertex: Int? = null
+    override fun needSet(data: CloudForView): Boolean {
+        return data.pointData.isUpdated()
+    }
 
-                countVertex = 0
+    override fun setVertexBuffer(buffer: FloatBuffer, data: CloudForView): Int {
+        var countVertex = 0
         data.pointData.forEach { glob, i ->
             buffer.put(4 * i, glob.z)
             buffer.put(4 * i + 1, glob.x)

@@ -23,19 +23,15 @@ class GlComponentForView(
         glComponent.setFocusable(true)
         glComponent.addGLEventListener(eventListener)
 
-        val mouseControl = V3dMouseControl(SetMatrixCallback { modelviewMatrix: FloatArray? ->
-            eventListener.setModelviewMatrix(
-                modelviewMatrix!!
-            )
-        })
+        val mouseControl = V3dMouseControl { modelviewMatrix: FloatArray ->
+            eventListener.modelviewMatrix = modelviewMatrix
+        }
         glComponent.addMouseMotionListener(mouseControl)
         glComponent.addMouseWheelListener(mouseControl)
-        eventListener.setModelviewMatrix(
-            V3dUtils.multiply(
+        eventListener.modelviewMatrix = V3dUtils.multiply(
                 V3dUtils.multiply(V3dUtils.rotationX(40f), V3dUtils.rotationY(30f)),
                 V3dUtils.translation(0f, 0f, -4f)
-            )!!
-        )
+            )
 
         animator = FPSAnimator(glComponent, 120)
         eventListener.animator = animator

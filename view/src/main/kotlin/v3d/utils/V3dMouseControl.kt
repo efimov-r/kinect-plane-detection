@@ -18,7 +18,7 @@ class V3dMouseControl(private val callback: SetMatrixCallback) : MouseMotionList
     private var rotationY = 30f
 
     fun interface SetMatrixCallback {
-        fun setMtx(mtx: FloatArray?)
+        fun setMtx(mtx: FloatArray)
     }
 
     private var previousMousePosition = Point()

@@ -1,5 +1,8 @@
 package v3d.utils
 
+import com.jogamp.opengl.GL
+import com.jogamp.opengl.GL3
+import com.jogamp.opengl.GLAutoDrawable
 import com.jogamp.opengl.util.Animator
 import com.jogamp.opengl.util.AnimatorBase
 import java.io.BufferedReader
@@ -12,18 +15,37 @@ import kotlin.math.sin
 import kotlin.system.exitProcess
 
 object V3dUtils {
-//    fun showErrorMess(title: String?, text: String?, callbackEventListener: CallbackJkiEventListener) {
-//        Thread(object : Runnable {
-//            override fun run() {
-//                JOptionPane.showMessageDialog(
-//                    null,
-//                    text,
-//                    title, JOptionPane.ERROR_MESSAGE
-//                )
-//                callbackEventListener.animatorStop()
-//            }
-//        }).start()
-//    }
+    fun glInit(drawable: GLAutoDrawable): GL3 {
+        val gl = drawable.getGL().getGL3()
+        gl.setSwapInterval(0)
+        gl.glEnable(GL.GL_DEPTH_TEST)
+        gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f)
+
+        (drawable.getGL() as GL3).glViewport(0, 0,
+            drawable.getSurfaceWidth(),
+            drawable.getSurfaceHeight()
+        )
+        return gl
+    }
+
+    fun glViewport(drawable: GLAutoDrawable) {
+        val gl = drawable.getGL() as GL3
+        gl.glViewport(
+            0, 0,
+            drawable.getSurfaceWidth(),
+            drawable.getSurfaceHeight()
+        )
+    }
+
+    fun checkGlEx(gl: GL3, animator: AnimatorBase?) {
+        if (!gl.isExtensionAvailable("GL_ARB_vertex_buffer_object")) {
+            showErrorMess(
+                "Unavailable extension",
+                "GL_ARB_vertex_buffer_object extension not available",
+                animator
+            )
+        }
+    }
 
     fun showErrorMess(title: String?, text: String?, animator: AnimatorBase?) {
         Thread {
@@ -107,8 +129,8 @@ object V3dUtils {
      * @param m1 The second matrix
      * @return The product m0*m1
      */
-    fun multiply(m0: FloatArray?, m1: FloatArray?): FloatArray? {
-        val m: FloatArray? = FloatArray(16)
+    fun multiply(m0: FloatArray?, m1: FloatArray?): FloatArray {
+        val m = FloatArray(16)
         for (x in 0..3) {
             for (y in 0..3) {
                 m!![x * 4 + y] =

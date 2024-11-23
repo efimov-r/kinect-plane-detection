@@ -7,68 +7,27 @@ import com.jogamp.opengl.GL3
 import com.jogamp.opengl.GLAutoDrawable
 import com.jogamp.opengl.GLEventListener
 import com.jogamp.opengl.util.AnimatorBase
-import v3d.V3dRunner
-import v3d.shaders.Shader
-import v3d.utils.FpsInformator
-import v3d.utils.V3dUtils.showErrorMess
-import v3d.vbos.VBOHelper
 import kotlinx.coroutines.runBlocking
+import v3d.utils.FpsInformator
+import v3d.utils.V3dUtils
 
 class V3dGlMultiEventListener(
     private val v3dComplects: MutableList<V3dComplect>,
+    private val v3dModelComplects: MutableList<V3dModelComplect>,
     private val channelToView: BufferedChannel<CloudForView>
 ) : GLEventListener {
-    class V3dComplect {
-        var runner: V3dRunner? = null
-        var vboHelper: VBOHelper? = null
-        var shaders: MutableList<Shader>? = null
-        var countPointsRender: Int = 0
-    }
 
     private var initialized = false
-
-    private var modelviewMatrix = FloatArray(16)
-
+    var modelviewMatrix = FloatArray(16)
     var animator: AnimatorBase? = null
     var fpsInformator: FpsInformator? = null
 
-    fun setModelviewMatrix(modelviewMatrix: FloatArray) {
-        this.modelviewMatrix = modelviewMatrix
-    }
-
     override fun init(drawable: GLAutoDrawable) {
-        val gl = drawable.getGL().getGL3()
-        gl.setSwapInterval(0)
-        gl.glEnable(GL.GL_DEPTH_TEST)
-        gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f)
+        val gl = V3dUtils.glInit(drawable)
+        val aspect = drawable.getSurfaceWidth().toFloat() / drawable.getSurfaceHeight()
 
-        val glv = drawable.getGL() as GL3
-        glv.glViewport(
-            0, 0,
-            drawable.getSurfaceWidth(),
-            drawable.getSurfaceHeight()
-        )
-
-        for (v3dComplect in v3dComplects) {
-            for (shader in v3dComplect.shaders!!) {
-                shader.initShader(gl)
-                shader.setupView(drawable.getSurfaceWidth().toFloat() / drawable.getSurfaceHeight())
-            }
-
-            if (!gl.isExtensionAvailable("GL_ARB_vertex_buffer_object")) {
-                showErrorMess(
-                    "Unavailable extension",
-                    "GL_ARB_vertex_buffer_object extension not available",
-                    animator
-                )
-            }
-
-            v3dComplect.vboHelper!!.init(gl)
-
-            for (shader in v3dComplect.shaders!!) {
-                shader.initAttributes(gl)
-            }
-        }
+        v3dComplects.forEach { V3dComplect.initComplect(gl, aspect, it, animator) }
+        v3dModelComplects.forEach{ V3dModelComplect.initModelComplect(gl, aspect, it, animator) }
 
         initialized = true
     }
@@ -80,45 +39,24 @@ class V3dGlMultiEventListener(
         if (!initialized) return
 
         runBlocking{
-            val lastDataForRead = channelToView.getLastDataForRead() ?: return@runBlocking
+            channelToView.getLastDataForRead()?.let { lastDataForRead ->
+                val gl = drawable.getGL() as GL3
+                gl.glClear(GL.GL_COLOR_BUFFER_BIT or GL.GL_DEPTH_BUFFER_BIT)
+                v3dComplects.forEach { V3dComplect.displayComplect(gl, it, lastDataForRead, modelviewMatrix) }
+                v3dModelComplects.forEach{ V3dModelComplect.displayModelComplect(gl, it, modelviewMatrix) }
 
-            val gl = drawable.getGL() as GL3
-            gl.glClear(GL.GL_COLOR_BUFFER_BIT or GL.GL_DEPTH_BUFFER_BIT)
-            for (v3dComplect in v3dComplects) {
-                val floatBuffer = v3dComplect.vboHelper!!.mapBuffer(gl)
-                if(floatBuffer != null) {
-                    val countPointsRenderLocal = v3dComplect.runner!!.setVertexBuffer(floatBuffer, lastDataForRead)
-                    v3dComplect.vboHelper!!.unmapBuffer(gl)
-                    if(countPointsRenderLocal != null) {
-                        v3dComplect.countPointsRender = countPointsRenderLocal
-                    }
-                }
+                channelToView.endRead(lastDataForRead)
 
-
-                for (shader in v3dComplect.shaders!!) {
-                    shader.setShader(gl, modelviewMatrix)
-                    v3dComplect.vboHelper!!.render(gl, v3dComplect.countPointsRender)
-                }
+                fpsInformator?.informate()
             }
-
-            channelToView.endRead(lastDataForRead)
-
-            fpsInformator?.informate()
         }
     }
 
     override fun reshape(drawable: GLAutoDrawable, x: Int, y: Int, width: Int, height: Int) {
-        val gl = drawable.getGL() as GL3
-        gl.glViewport(
-            0, 0,
-            drawable.getSurfaceWidth(),
-            drawable.getSurfaceHeight()
-        )
+        V3dUtils.glViewport(drawable)
 
-        for (v3dComplect in v3dComplects) {
-            for (shader in v3dComplect.shaders!!) {
-                shader.setupView(drawable.getSurfaceWidth().toFloat() / drawable.getSurfaceHeight())
-            }
-        }
+        val aspect = drawable.getSurfaceWidth().toFloat() / drawable.getSurfaceHeight()
+        v3dComplects.forEach { V3dComplect.reshapeComplect(it, aspect) }
+        v3dModelComplects.forEach { V3dModelComplect.reshapeModelComplect(it, aspect) }
     }
 }
