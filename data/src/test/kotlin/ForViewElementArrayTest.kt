@@ -18,7 +18,9 @@ internal class ForViewElementArrayTest {
 
         assertEquals(myArr.isUpdated(), true)
 
-        myArr.forEach {  }
+        myArr.forEach { glob, i ->
+
+        }
 
         assertEquals(myArr.isUpdated(), true)
 
@@ -26,7 +28,9 @@ internal class ForViewElementArrayTest {
 
         assertEquals(myArr.isUpdated(), false)
 
-        myArr.forEach {  }
+        myArr.forEach { glob, i ->
+
+        }
 
         assertEquals(myArr.isUpdated(), true)
 
@@ -61,10 +65,10 @@ internal class ForViewElementArrayTest {
                 }
 
                 var ii = 0
-                myArr.forEach {
-                    assertEquals(it.z, ii.toFloat())
-                    assertEquals(it.x, (ii+1).toFloat())
-                    assertEquals(it.y, (ii+2 + j).toFloat())
+                myArr.forEach { glob, i ->
+                    assertEquals(glob.z, ii.toFloat())
+                    assertEquals(glob.x, (ii+1).toFloat())
+                    assertEquals(glob.y, (ii+2 + j).toFloat())
                     ii++
                 }
 

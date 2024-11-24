@@ -4,6 +4,7 @@ import cloud.BufferedChannel
 import cloud.databuffer.CloudOfSensor
 import era.utils.files.KiLogger
 import kinect.freenect.DepthFormat
+import kinect.freenect.DepthHandler
 import kinect.freenect.Freenect
 import kinect.handlers.DepthHandlerImpl
 
@@ -19,6 +20,14 @@ class Kinect {
             } catch (ex: Exception) {
                 KiLogger.err(ex)
             }
+        }
+
+        fun init(depthHandler: DepthHandler) { //for test
+            val tmpContext = Freenect.createContext()
+            tmpContext.selectSubdev()
+            val device = tmpContext.openDevice(0)
+            device.setDepthFormat(DepthFormat.D11BIT)
+            device.startDepth(depthHandler)
         }
     }
 }
