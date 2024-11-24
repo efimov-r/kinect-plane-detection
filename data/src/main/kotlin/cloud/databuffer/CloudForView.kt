@@ -2,11 +2,11 @@ package cloud.databuffer
 
 import cloud.entities.forview.*
 
-class CloudForView(cubeSize: Int,
-    lineSize: Int,
-    pointSize: Int,
-    triangleSize: Int,
-    val id: Int) : DataForBufferedChannel {
+class CloudForView(val id: Int,
+                   cubeSize: Int = 100,
+                    lineSize: Int = 100,
+                    pointSize: Int = 100,
+                    triangleSize: Int = 100) : DataForBufferedChannel {
 
     val cubeData: ForViewElementArray<Cube> =
         ForViewElementArray(initialCapacity = cubeSize) {Cube.createEmpty()}

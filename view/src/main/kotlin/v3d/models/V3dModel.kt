@@ -1,4 +1,4 @@
-package v3d
+package v3d.models
 
 import java.nio.FloatBuffer
 

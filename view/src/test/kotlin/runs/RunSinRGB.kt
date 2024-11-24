@@ -1,7 +1,7 @@
 package runs
 
 import cloud.databuffer.CloudForView
-import v3d.V3dRunner
+import v3d.runners.V3dRunner
 import java.nio.FloatBuffer
 import java.util.concurrent.TimeUnit
 import kotlin.math.cos
@@ -12,6 +12,10 @@ class RunSinRGB(private var animationState: Float, private val mesh_width: Int, 
 
     override fun needSet(data: CloudForView): Boolean {
         return true
+    }
+
+    override fun getBuffSize(data: CloudForView): Int {
+        return this.mesh_width * this.mesh_height
     }
 
     override fun setVertexBuffer(vertices: FloatBuffer, data: CloudForView): Int {

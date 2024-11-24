@@ -9,22 +9,20 @@ import v3d.vbos.model.VBOModel
 data class V3dModelComplect(var vbo: VBOModel,
                             var shader: Shader
 ) {
-    companion object {
-        fun initModelComplect(gl: GL3, aspect: Float, modelComplect: V3dModelComplect, animator: AnimatorBase?) {
-            modelComplect.shader.initShader(gl)
-            modelComplect.shader.setupView(aspect)
-            V3dUtils.checkGlEx(gl, animator)
-            modelComplect.vbo.init(gl)
-            modelComplect.shader.initAttributes(gl)
-        }
+    fun init(gl: GL3, aspect: Float, animator: AnimatorBase?) {
+        this.shader.initShader(gl)
+        this.shader.setupView(aspect)
+        V3dUtils.checkGlEx(gl, animator)
+        this.vbo.init(gl)
+        this.shader.initAttributes(gl)
+    }
 
-        fun displayModelComplect(gl: GL3, v3dModelComplect: V3dModelComplect, modelviewMatrix: FloatArray) {
-            v3dModelComplect.shader.setShader(gl, modelviewMatrix)
-            v3dModelComplect.vbo.render(gl, 0)
-        }
+    fun display(gl: GL3, modelviewMatrix: FloatArray) {
+        this.shader.setShader(gl, modelviewMatrix)
+        this.vbo.render(gl, 0)
+    }
 
-        fun reshapeModelComplect(v3dModelComplect: V3dModelComplect, aspect: Float) {
-            v3dModelComplect.shader.setupView(aspect)
-        }
+    fun reshape(aspect: Float) {
+        this.shader.setupView(aspect)
     }
 }

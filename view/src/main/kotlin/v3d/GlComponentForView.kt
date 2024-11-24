@@ -6,7 +6,6 @@ import com.jogamp.opengl.util.AnimatorBase
 import com.jogamp.opengl.util.FPSAnimator
 import v3d.eventlistener.V3dGlMultiEventListener
 import v3d.utils.V3dMouseControl
-import v3d.utils.V3dMouseControl.SetMatrixCallback
 import v3d.utils.V3dUtils
 import v3d.utils.V3dUtils.runExit
 import java.awt.Dimension

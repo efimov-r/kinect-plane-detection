@@ -1,13 +1,17 @@
 package runs
 
 import cloud.databuffer.CloudForView
-import v3d.V3dRunner
+import v3d.runners.V3dRunner
 import java.nio.FloatBuffer
 import java.util.concurrent.TimeUnit
 
 class RunTrianglesRGB : V3dRunner {
     override fun needSet(data: CloudForView): Boolean {
         return true
+    }
+
+    override fun getBuffSize(data: CloudForView): Int {
+        return 6
     }
 
     override fun setVertexBuffer(buffer: FloatBuffer, data: CloudForView): Int {

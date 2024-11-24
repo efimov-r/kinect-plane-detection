@@ -3,7 +3,7 @@ package v3d.vbos.model
 import com.jogamp.opengl.GL
 import com.jogamp.opengl.GL3
 import org.jocl.Sizeof
-import v3d.V3dModel
+import v3d.models.V3dModel
 import java.nio.ByteOrder
 import java.nio.IntBuffer
 

@@ -20,7 +20,7 @@ fun main() {
         }
 
         val toViewChannel = BufferedChannel {
-            return@BufferedChannel CloudForView(1, 1, 640*480, 1, it)
+            return@BufferedChannel CloudForView(it)
         }
 
         Kinect.init(formSensorChannel)

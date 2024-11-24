@@ -7,11 +7,11 @@ import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import java.nio.IntBuffer
 
-class VBOPoints(private val size: Int) : VBO {
+class VBOPoints: VBO {
     private var vertexArrayObject = 0
     private var vertexBufferObject = 0
 
-    override fun init(gl: GL3) {
+    override fun init(gl: GL3, size: Int) {
         if (vertexBufferObject != 0) {
             gl.glDeleteBuffers(1, intArrayOf(vertexBufferObject), 0)
             vertexBufferObject = 0
@@ -34,6 +34,7 @@ class VBOPoints(private val size: Int) : VBO {
         // Initialize the vertex buffer object
         gl.glBindBuffer(GL.GL_ARRAY_BUFFER, vertexBufferObject)
         gl.glBufferData(GL.GL_ARRAY_BUFFER, (size.toLong()) * 4 * Sizeof.cl_float, null, GL.GL_DYNAMIC_DRAW)
+        println("new size buff: $size")
     }
 
     override fun render(gl: GL3, countOfVboPoint: Int) {
