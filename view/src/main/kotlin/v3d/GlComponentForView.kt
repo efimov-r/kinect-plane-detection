@@ -9,10 +9,12 @@ import v3d.utils.V3dMouseControl
 import v3d.utils.V3dUtils
 import v3d.utils.V3dUtils.runExit
 import java.awt.Dimension
+import java.awt.event.KeyAdapter
 
 class GlComponentForView(
     glCapabilities: GLCapabilities?,
-    eventListener: V3dGlMultiEventListener
+    eventListener: V3dGlMultiEventListener,
+    keyAdapter: KeyAdapter? = null
 ) {
     private var animator: AnimatorBase? = null
     val glComponent: GLCanvas
@@ -27,6 +29,7 @@ class GlComponentForView(
         }
         glComponent.addMouseMotionListener(mouseControl)
         glComponent.addMouseWheelListener(mouseControl)
+        keyAdapter?.let { glComponent.addKeyListener(it) }
         eventListener.modelviewMatrix = V3dUtils.multiply(
                 V3dUtils.multiply(V3dUtils.rotationX(40f), V3dUtils.rotationY(30f)),
                 V3dUtils.translation(0f, 0f, -4f)

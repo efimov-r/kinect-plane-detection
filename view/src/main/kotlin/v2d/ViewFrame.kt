@@ -7,6 +7,7 @@ import v3d.utils.GLCapabilitiesCreator
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.Frame
+import java.awt.event.KeyAdapter
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import javax.swing.JFrame
@@ -14,7 +15,9 @@ import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.JTextArea
 
-class ViewFrame(glCapabilitiesCreator: GLCapabilitiesCreator, eventListener: V3dGlMultiEventListener) {
+class ViewFrame(glCapabilitiesCreator: GLCapabilitiesCreator,
+                eventListener: V3dGlMultiEventListener,
+                keyAdapter: KeyAdapter? = null) {
     private val textArea: JTextArea
 
     init {
@@ -27,7 +30,8 @@ class ViewFrame(glCapabilitiesCreator: GLCapabilitiesCreator, eventListener: V3d
         }
         val glComponentForView = GlComponentForView(
             glCapabilitiesCreator.capabilities,
-            eventListener
+            eventListener,
+            keyAdapter
         )
         frame.addWindowListener(object : WindowAdapter() {
             override fun windowClosing(e: WindowEvent?) {

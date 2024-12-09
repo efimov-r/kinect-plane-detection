@@ -5,7 +5,7 @@ data class Point(
     var y: Float,
     var x: Float,
     var color: Float
-): IForViewElement {
+): IElement {
     fun copyOf(point: Point) {
         this.z = point.z
         this.x = point.x

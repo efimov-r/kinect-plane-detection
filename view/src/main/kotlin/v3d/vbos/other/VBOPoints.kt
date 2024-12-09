@@ -34,7 +34,6 @@ class VBOPoints: VBO {
         // Initialize the vertex buffer object
         gl.glBindBuffer(GL.GL_ARRAY_BUFFER, vertexBufferObject)
         gl.glBufferData(GL.GL_ARRAY_BUFFER, (size.toLong()) * 4 * Sizeof.cl_float, null, GL.GL_DYNAMIC_DRAW)
-        println("new size buff: $size")
     }
 
     override fun render(gl: GL3, countOfVboPoint: Int) {

@@ -8,17 +8,17 @@ class CloudForView(val id: Int,
                     pointSize: Int = 100,
                     triangleSize: Int = 100) : DataForBufferedChannel {
 
-    val cubeData: ForViewElementArray<Cube> =
-        ForViewElementArray(initialCapacity = cubeSize) {Cube.createEmpty()}
+    val cubeData: ElementArray<Cube> =
+        ElementArray(initialCapacity = cubeSize) {Cube.createEmpty()}
 
-    val lineData: ForViewElementArray<Line> =
-        ForViewElementArray(initialCapacity = lineSize) {Line.createEmpty()}
+    val lineData: ElementArray<Line> =
+        ElementArray(initialCapacity = lineSize) {Line.createEmpty()}
 
-    val pointData: ForViewElementArray<Point> =
-        ForViewElementArray(initialCapacity = pointSize) {Point.createEmpty()}
+    val pointData: ElementArray<Point> =
+        ElementArray(initialCapacity = pointSize) {Point.createEmpty()}
 
-    val triangleData: ForViewElementArray<Triangle> =
-        ForViewElementArray(initialCapacity = triangleSize) {Triangle.createEmpty()}
+    val triangleData: ElementArray<Triangle> =
+        ElementArray(initialCapacity = triangleSize) {Triangle.createEmpty()}
 
     override fun getIdData(): Int {
         return id

@@ -5,7 +5,7 @@ data class Cube(
     var y: Float,
     var x: Float,
     var color: Float
-): IForViewElement {
+): IElement {
     fun copyOf(cube: Cube) {
         this.z = cube.z
         this.x = cube.x

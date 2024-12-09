@@ -94,6 +94,11 @@ class KiLogger private constructor(fileName: String) {
             instance!!.flush()
         }
 
+        fun currentThreadLog(text: String) {
+            val currentThread = Thread.currentThread()
+            inf("$text; name thread: ${currentThread.name}; priority: ${currentThread.priority};")
+        }
+
         fun close() {
             if (instance != null) {
                 instance!!.writeLn("---------- Closed this file! ----------")

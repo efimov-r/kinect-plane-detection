@@ -4,7 +4,7 @@ data class Triangle(
     val v1: Point,
     val v2: Point,
     val v3: Point
-): IForViewElement {
+): IElement {
     fun copyOf(triangle: Triangle) {
         this.v1.copyOf(triangle.v1)
         this.v2.copyOf(triangle.v2)

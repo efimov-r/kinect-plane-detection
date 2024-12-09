@@ -146,6 +146,17 @@ internal class v3dTest {
                             it.v2.y = 0f
                             it.v2.color = 0f
                         }
+                        it.lineData.add {
+                            it.v1.z = 0.1f
+                            it.v1.x = 0.1f
+                            it.v1.y = 0.1f
+                            it.v1.color = 1f
+
+                            it.v2.z = 1.1f
+                            it.v2.x = 0.1f
+                            it.v2.y = 0.1f
+                            it.v2.color = 0f
+                        }
                         it.triangleData.add {
                             it.v1.z = -1f
                             it.v1.x = 1f
