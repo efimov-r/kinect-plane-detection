@@ -1,22 +1,22 @@
-package cloud.entities
+package support
 
-import cloud.entities.forview.IElement
+import viewdata.elementlist.IElement
 import java.io.Serializable
 
-data class Glob (
+data class GlobForTest (
     var z: Short,
     var y: Short,
     var x: Short
 ) : IElement, Serializable{
-    fun copyOf(glob: Glob) {
+    fun copyOf(glob: GlobForTest) {
         this.x = glob.x
         this.y = glob.y
         this.z = glob.z
     }
 
     companion object {
-        fun createEmpty(): Glob {
-            return Glob(0, 0, 0)
+        fun createEmpty(): GlobForTest {
+            return GlobForTest(0, 0, 0)
         }
     }
 }

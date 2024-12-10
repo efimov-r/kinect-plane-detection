@@ -1,5 +1,5 @@
-import cloud.BufferedChannel
-import cloud.databuffer.CloudOfSensor
+import bufferchanel.BufferedChannel
+import support.CloudForTest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -13,7 +13,7 @@ internal class BufferedChannelTest {
     fun testWriteMess() {
         val start2 = Date().time
         val sc = BufferedChannel {
-            return@BufferedChannel CloudOfSensor(640*480, it)
+            return@BufferedChannel CloudForTest(640*480, it)
         }
 
         println(Date().time - start2)

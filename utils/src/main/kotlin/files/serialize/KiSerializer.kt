@@ -1,4 +1,4 @@
-package files
+package files.serialize
 
 import era.utils.files.KiLogger
 import java.io.FileInputStream
@@ -6,7 +6,7 @@ import java.io.FileOutputStream
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 
-class KiSerializer<T>(val filename: String) {
+class KiSerializer<T: ISerializedData>(val filename: String) {
     fun writeObject(obj: T) {
         try {
             ObjectOutputStream(FileOutputStream(filename)).use {

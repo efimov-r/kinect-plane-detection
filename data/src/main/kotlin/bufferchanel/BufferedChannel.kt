@@ -1,6 +1,6 @@
-package cloud
+package bufferchanel
 
-import cloud.databuffer.DataForBufferedChannel
+import bufferchanel.databuffer.DataForBufferedChannel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.*

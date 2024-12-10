@@ -1,15 +1,15 @@
-import cloud.entities.forview.ElementArray
-import cloud.entities.forview.Point
+import viewdata.elementlist.ElementList
+import viewdata.elementlist.elements.Point
 import org.junit.jupiter.api.Test
 import java.util.*
 import kotlin.test.assertEquals
 
-internal class ElementArrayTest {
+internal class ElementListTest {
 
     @Test
     fun testNotUpdated() {
-        val myArr = ElementArray{
-            return@ElementArray Point.createEmpty()
+        val myArr = ElementList{
+            return@ElementList Point.createEmpty()
         }
 
         assertEquals(myArr.isUpdated(), false)
@@ -47,8 +47,8 @@ internal class ElementArrayTest {
     @Test
     fun testOutOfMemory() {
         try {
-            val myArr = ElementArray{
-                return@ElementArray Point.createEmpty()
+            val myArr = ElementList{
+                return@ElementList Point.createEmpty()
             }
             val start = Date().time
             for(j in 0..10) {

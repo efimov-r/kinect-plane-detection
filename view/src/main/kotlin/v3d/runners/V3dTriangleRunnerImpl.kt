@@ -1,18 +1,18 @@
 package v3d.runners
 
-import cloud.databuffer.CloudForView
+import bufferchanel.databuffer.BufferedChannelForView
 import java.nio.FloatBuffer
 
 class V3dTriangleRunnerImpl : V3dRunner {
-    override fun needSet(data: CloudForView): Boolean {
+    override fun needSet(data: BufferedChannelForView): Boolean {
         return data.triangleData.isUpdated()
     }
 
-    override fun getBuffSize(data: CloudForView): Int {
+    override fun getBuffSize(data: BufferedChannelForView): Int {
         return data.triangleData.size()
     }
 
-    override fun setVertexBuffer(buffer: FloatBuffer, data: CloudForView): Int {
+    override fun setVertexBuffer(buffer: FloatBuffer, data: BufferedChannelForView): Int {
         var countVertex = 0
         data.triangleData.forEach { triangle, i ->
             buffer.put(12 * i,  triangle.v1.z)

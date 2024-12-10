@@ -1,6 +1,6 @@
 package v3d.eventlistener
 
-import cloud.databuffer.CloudForView
+import bufferchanel.databuffer.BufferedChannelForView
 import com.jogamp.opengl.GL3
 import com.jogamp.opengl.util.AnimatorBase
 import v3d.runners.V3dRunner
@@ -35,7 +35,7 @@ data class V3dComplect (var runner: V3dRunner,
         }
     }
 
-    fun display(gl: GL3, cloud: CloudForView, modelviewMatrix: FloatArray) {
+    fun display(gl: GL3, cloud: BufferedChannelForView, modelviewMatrix: FloatArray) {
         if(this.runner.needSet(cloud)) {
             val newSize = this.runner.getBuffSize(cloud)
             if(newSize > this.currentSizeBuff) {

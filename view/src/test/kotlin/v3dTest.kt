@@ -1,5 +1,5 @@
-import cloud.BufferedChannel
-import cloud.databuffer.CloudForView
+import bufferchanel.BufferedChannel
+import bufferchanel.databuffer.BufferedChannelForView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -42,7 +42,7 @@ internal class v3dTest {
     fun testCubeWithoutChannel() { //тест работы промежуточных кадров, ок. 20fps должно давать
         runBlocking {
             val toViewChannel = BufferedChannel {
-                return@BufferedChannel CloudForView(it)
+                return@BufferedChannel BufferedChannelForView(it)
             }
 
             launch(Dispatchers.IO) {
@@ -72,7 +72,7 @@ internal class v3dTest {
         var animationState = 0f
         runBlocking {
             val toViewChannel = BufferedChannel {
-                return@BufferedChannel CloudForView(it)
+                return@BufferedChannel BufferedChannelForView(it)
             }
 
             launch(Dispatchers.IO) {
@@ -124,7 +124,7 @@ internal class v3dTest {
         var animationState = 0f
         runBlocking {
             val toViewChannel = BufferedChannel {
-                return@BufferedChannel CloudForView(it)
+                return@BufferedChannel BufferedChannelForView(it)
             }
 
             launch(Dispatchers.IO) {
@@ -221,7 +221,7 @@ internal class v3dTest {
 
     private fun start(v3dComplect: V3dComplect?,
                       v3dModelComplect: V3dModelComplect?,
-                      channelToView: BufferedChannel<CloudForView>?) {
+                      channelToView: BufferedChannel<BufferedChannelForView>?) {
 
         val creator = GLCapabilitiesCreator()
         val v3dComplects: MutableList<V3dComplect> = ArrayList()

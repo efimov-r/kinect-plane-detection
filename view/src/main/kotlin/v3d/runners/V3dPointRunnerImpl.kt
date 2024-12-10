@@ -1,18 +1,18 @@
 package v3d.runners
 
-import cloud.databuffer.CloudForView
+import bufferchanel.databuffer.BufferedChannelForView
 import java.nio.FloatBuffer
 
 class V3dPointRunnerImpl : V3dRunner {
-    override fun needSet(data: CloudForView): Boolean {
+    override fun needSet(data: BufferedChannelForView): Boolean {
         return data.pointData.isUpdated()
     }
 
-    override fun getBuffSize(data: CloudForView): Int {
+    override fun getBuffSize(data: BufferedChannelForView): Int {
         return data.pointData.size()
     }
 
-    override fun setVertexBuffer(buffer: FloatBuffer, data: CloudForView): Int {
+    override fun setVertexBuffer(buffer: FloatBuffer, data: BufferedChannelForView): Int {
         var countVertex = 0
         data.pointData.forEach { glob, i ->
             buffer.put(4 * i, glob.z)

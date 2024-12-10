@@ -1,21 +1,25 @@
 package sensors.cams.file
 
-import cloud.BufferedChannel
-import cloud.databuffer.CloudOfSensor
-import files.KiSerializer
+import bufferchanel.BufferedChannel
+import bufferchanel.databuffer.BufferedCloudOfSensor
+import clouds.CloudJ
+import files.serialize.KiSerializer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import sensors.cams.Cloudsorce
+import serialize.ShortArraySerialize
 
-class CloudSerializer(private val channel: BufferedChannel<CloudOfSensor>): Cloudsorce {
+class CloudSerializer(private val channel: BufferedChannel<BufferedCloudOfSensor>): Cloudsorce {
 
     private var eventThread: EventThread? = null
-    private var kiSer: KiSerializer<CloudOfSensor> = KiSerializer("clouds/serializedInputCloud.cl")
+    private var kiSer: KiSerializer<ShortArraySerialize> = KiSerializer("clouds/serializedInputCloud.cl")
+    private var isRun = false
 
     override fun startDepth() {
         if (eventThread == null || !eventThread!!.isAlive()) {
             eventThread = EventThread(kiSer, channel)
             eventThread!!.start()
+            isRun = true;
         }
     }
 
@@ -23,18 +27,24 @@ class CloudSerializer(private val channel: BufferedChannel<CloudOfSensor>): Clou
         if (eventThread != null) {
             eventThread!!.kill()
             eventThread = null
+            isRun = false;
         }
     }
 
-    fun writeCloud(cloud: CloudOfSensor) {
-        kiSer.writeObject(cloud)
+    override fun isRun(): Boolean {
+        return isRun
     }
 
-    private class EventThread(private val kiSer: KiSerializer<CloudOfSensor>,
-                              private val channel: BufferedChannel<CloudOfSensor>) : Thread() {
+    fun writeCloud(cloud: BufferedCloudOfSensor) {
+        kiSer.writeObject(cloud.objForSerialize)
+    }
+
+    private class EventThread(private val kiSer: KiSerializer<ShortArraySerialize>,
+                              private val channel: BufferedChannel<BufferedCloudOfSensor>
+    ) : Thread() {
         @Volatile
         private var alive = true
-        private var fileCloud: CloudOfSensor? = null
+        private var fileCloud: ShortArraySerialize? = null
 
         init {
             setDaemon(true)
@@ -53,7 +63,7 @@ class CloudSerializer(private val channel: BufferedChannel<CloudOfSensor>): Clou
                 fileCloud?.let {
                     runBlocking(Dispatchers.IO){
                         channel.getDataForWrite()?.let {
-                            it.copyOf(fileCloud!!)
+                            it.copyOf(fileCloud)
                             channel.endWrite(it)
                         }
                     }

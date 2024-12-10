@@ -1,6 +1,6 @@
 package runs
 
-import cloud.databuffer.CloudForView
+import bufferchanel.databuffer.BufferedChannelForView
 import v3d.runners.V3dRunner
 import java.nio.FloatBuffer
 import java.util.concurrent.TimeUnit
@@ -10,15 +10,15 @@ import kotlin.math.sin
 class RunSinRGB(private var animationState: Float, private val mesh_width: Int, private val mesh_height: Int) :
     V3dRunner {
 
-    override fun needSet(data: CloudForView): Boolean {
+    override fun needSet(data: BufferedChannelForView): Boolean {
         return true
     }
 
-    override fun getBuffSize(data: CloudForView): Int {
+    override fun getBuffSize(data: BufferedChannelForView): Int {
         return this.mesh_width * this.mesh_height
     }
 
-    override fun setVertexBuffer(vertices: FloatBuffer, data: CloudForView): Int {
+    override fun setVertexBuffer(vertices: FloatBuffer, data: BufferedChannelForView): Int {
         for (x in 0..<this.mesh_width) {
             for (y in 0..<this.mesh_height) {
                 var u = x / this.mesh_width.toFloat()

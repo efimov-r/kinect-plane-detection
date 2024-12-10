@@ -1,4 +1,6 @@
-package cloud.entities.forview
+package viewdata.elementlist.elements
+
+import viewdata.elementlist.IElement
 
 data class Line(
     val v1: Point,

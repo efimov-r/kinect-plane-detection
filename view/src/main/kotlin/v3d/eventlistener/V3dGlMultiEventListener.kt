@@ -1,7 +1,7 @@
 package v3d.eventlistener
 
-import cloud.BufferedChannel
-import cloud.databuffer.CloudForView
+import bufferchanel.BufferedChannel
+import bufferchanel.databuffer.BufferedChannelForView
 import com.jogamp.opengl.GL
 import com.jogamp.opengl.GL3
 import com.jogamp.opengl.GLAutoDrawable
@@ -15,7 +15,7 @@ import java.util.Date
 class V3dGlMultiEventListener(
     private val v3dComplects: List<V3dComplect>,
     private val v3dModelComplects: List<V3dModelComplect>,
-    private val channelToView: BufferedChannel<CloudForView>?
+    private val channelToView: BufferedChannel<BufferedChannelForView>?
 ) : GLEventListener {
 
     private var initialized = false

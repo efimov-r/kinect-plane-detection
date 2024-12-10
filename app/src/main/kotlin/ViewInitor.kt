@@ -1,8 +1,8 @@
 package era.app
 
-import cloud.BufferedChannel
-import cloud.databuffer.CloudForView
-import cloud.entities.ToViewText
+import bufferchanel.BufferedChannel
+import bufferchanel.databuffer.BufferedChannelForView
+import viewdata.transferdata.ToViewText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -21,7 +21,7 @@ import javax.swing.SwingUtilities
 class ViewInitor {
     companion object {
         fun init(scope: CoroutineScope,
-                 channelToView: BufferedChannel<CloudForView>,
+                 channelToView: BufferedChannel<BufferedChannelForView>,
                  channelText: Channel<ToViewText>,
                  channelKeyboard: Channel<Char>) {
             var viewFrame: ViewFrame? = null

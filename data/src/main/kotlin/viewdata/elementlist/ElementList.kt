@@ -1,8 +1,8 @@
-package cloud.entities.forview
+package viewdata.elementlist
 
-class ElementArray<T: IElement>(val initialCapacity: Int = 10,
-                                val growSize: Int = 1,
-                                val dataCreator: () -> T) {
+class ElementList<T: IElement>(val initialCapacity: Int = 10,
+                               val growSize: Int = 1,
+                               val dataCreator: () -> T) {
     private var elementData: Array<IElement>
     private var size = 0
     private var isUpdated = false;

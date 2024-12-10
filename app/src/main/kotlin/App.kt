@@ -1,9 +1,10 @@
 package era.app
 
-import cloud.entities.ToViewText
-import cloud.BufferedChannel
-import cloud.databuffer.CloudForView
-import cloud.databuffer.CloudOfSensor
+import bufferchanel.BufferedChannel
+import bufferchanel.databuffer.BufferedChannelForView
+import bufferchanel.databuffer.BufferedCloudOfSensor
+import viewdata.transferdata.ToViewText
+import clouds.CloudJ
 import era.utils.files.KiLogger
 import keyboard.Keys
 import kotlinx.coroutines.Dispatchers
@@ -13,7 +14,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import sensors.cams.file.CloudSerializer
 import sensors.cams.kinect.Kinect
-import java.security.Key
 
 fun main() {
     KiLogger.inf("main start")
@@ -22,11 +22,11 @@ fun main() {
     val channelKeyboard = Channel<Char>(Channel.CONFLATED)
 
     val formSensorChannel = BufferedChannel {
-        return@BufferedChannel CloudOfSensor(640*480, it)
+        return@BufferedChannel BufferedCloudOfSensor(640 * 480, "cloud of sensor", it)
     }
 
     val toViewChannel = BufferedChannel {
-        return@BufferedChannel CloudForView(it)
+        return@BufferedChannel BufferedChannelForView(it)
     }
 
     val kinect = Kinect(formSensorChannel)
@@ -76,8 +76,12 @@ fun main() {
                     }
                 }
                 if(Keys.S_KEY.isThis(c)) {
-                    state = State.SAVE
-                    KiLogger.inf("To save state")
+                    if(kinect.isRun()) {
+                        state = State.SAVE
+                        KiLogger.inf("To save state")
+                    } else {
+                        KiLogger.inf("Error save: kinect is not run")
+                    }
                 }
             }
         }

@@ -1,10 +1,10 @@
 package v3d.runners
 
-import cloud.databuffer.CloudForView
+import bufferchanel.databuffer.BufferedChannelForView
 import java.nio.FloatBuffer
 
 interface V3dRunner {
-    fun needSet(data: CloudForView): Boolean
-    fun getBuffSize(data: CloudForView): Int
-    fun setVertexBuffer(buffer: FloatBuffer, data: CloudForView): Int //вернуть сколько отрисовывать вершин сейчас
+    fun needSet(data: BufferedChannelForView): Boolean
+    fun getBuffSize(data: BufferedChannelForView): Int
+    fun setVertexBuffer(buffer: FloatBuffer, data: BufferedChannelForView): Int //вернуть сколько отрисовывать вершин сейчас
 }

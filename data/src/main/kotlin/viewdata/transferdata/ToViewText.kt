@@ -1,4 +1,4 @@
-package cloud.entities
+package viewdata.transferdata
 
 data class ToViewText(val text: String) {
 }

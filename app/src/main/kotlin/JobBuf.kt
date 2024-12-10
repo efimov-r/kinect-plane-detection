@@ -1,9 +1,10 @@
 package era.app
 
-import cloud.entities.ToViewText
-import cloud.BufferedChannel
-import cloud.databuffer.CloudForView
-import cloud.databuffer.CloudOfSensor
+import bufferchanel.BufferedChannel
+import bufferchanel.databuffer.BufferedChannelForView
+import bufferchanel.databuffer.BufferedCloudOfSensor
+import viewdata.transferdata.ToViewText
+import clouds.CloudJ
 import era.app.utils.subclouders.VerticalSubclouder
 import era.utils.time.Span
 import kotlinx.coroutines.*
@@ -17,8 +18,8 @@ class JobBuf {
         val span = Span()
 
         suspend fun execute(
-            formSensorChannel: BufferedChannel<CloudOfSensor>,
-            toViewChannel: BufferedChannel<CloudForView>,
+            formSensorChannel: BufferedChannel<BufferedCloudOfSensor>,
+            toViewChannel: BufferedChannel<BufferedChannelForView>,
             channelText: Channel<ToViewText>
         ) {
             coroutineScope {
@@ -26,10 +27,10 @@ class JobBuf {
                     toViewChannel.getDataForWriteOrRewriteOld()?.let { writeCloud ->
 
                         val launchPoint = doJobPointToView(readCloud, writeCloud, channelText)
-//                        val launchCube = doJobCube(readCloud, writeCloud)
+                        val launchCube = doJobCube(readCloud, writeCloud)
 
                         launchPoint.join()
-//                        launchCube.join()
+                        launchCube.join()
 
                         toViewChannel.endWrite(writeCloud)
                     }
@@ -39,7 +40,7 @@ class JobBuf {
         }
 
         fun CoroutineScope.doJobCube(
-            readCloud: CloudOfSensor, writeCloud: CloudForView
+            readCloud: CloudJ, writeCloud: BufferedChannelForView
         ):Job = launch(Dispatchers.IO) {
             val verticalVectors = createVerticalVectors(readCloud)
 //                                    viewVerticalVectors(writeCloud, verticalVectors)
@@ -77,9 +78,9 @@ class JobBuf {
             }
         }
 
-        fun CoroutineScope.doJobPointToView(inp: CloudOfSensor,
-                                             outp: CloudForView,
-                                             channelText: Channel<ToViewText>
+        fun CoroutineScope.doJobPointToView(inp: CloudJ,
+                                            outp: BufferedChannelForView,
+                                            channelText: Channel<ToViewText>
         ): Job = launch(Dispatchers.IO) {
             outp.pointData.clear()
             val text = "         min      max \n" +
@@ -87,28 +88,28 @@ class JobBuf {
                     "Y:      ${inp.minY}    ${inp.maxY}\n" +
                     "Z:      ${inp.minZ}    ${inp.maxZ}"
             channelText.send(ToViewText(text))
-            inp.editData { glob, id ->
+            inp.forEach { x, y, z ->
                 outp.pointData.add {
-                    it.z = glob.z.toFloat()/ AppConstants.MAX_MM_ON_V3D
-                    it.x = glob.x.toFloat()/ AppConstants.MAX_MM_ON_V3D
-                    it.y = glob.y.toFloat()/ AppConstants.MAX_MM_ON_V3D
+                    it.z = z.toFloat()/ AppConstants.MAX_MM_ON_V3D
+                    it.x = x.toFloat()/ AppConstants.MAX_MM_ON_V3D
+                    it.y = y.toFloat()/ AppConstants.MAX_MM_ON_V3D
                 }
             }
         }
 
 
-        private fun createVerticalVectors(inp: CloudOfSensor): ArrayList<V2Vertical> {
+        private fun createVerticalVectors(inp: CloudJ): ArrayList<V2Vertical> {
             val res = ArrayList<V2Vertical>()
-            if(inp.maxX - inp.minX < AppConstants.MIN_SIZE_CREATE_VERTICAL_VECTORS) {
+            if(inp.maxX == null || inp.minX == null || inp.maxX!! - inp.minX!! < AppConstants.MIN_SIZE_CREATE_VERTICAL_VECTORS) {
                 return res
             }
-            if(inp.maxZ - inp.minZ < AppConstants.MIN_SIZE_CREATE_VERTICAL_VECTORS) {
+            if(inp.maxZ == null || inp.minZ == null || inp.maxZ!! - inp.minZ!! < AppConstants.MIN_SIZE_CREATE_VERTICAL_VECTORS) {
                 return res
             }
-            var curX: Short = inp.minX
-            while (curX <= inp.maxX) {
-                var curZ: Short = inp.minZ
-                while(curZ <= inp.maxZ) {
+            var curX: Short = inp.minX!!
+            while (curX <= inp.maxX!!) {
+                var curZ: Short = inp.minZ!!
+                while(curZ <= inp.maxZ!!) {
                     res.add(V2Vertical(curX, curZ))
                     curZ = (curZ + AppConstants.STEP_CREATE_VERTICAL_VECTORS).toShort()
                 }
@@ -117,7 +118,7 @@ class JobBuf {
             return res
         }
 
-        private fun viewVerticalVectors(outp: CloudForView, inp: ArrayList<V2Vertical>) {
+        private fun viewVerticalVectors(outp: BufferedChannelForView, inp: ArrayList<V2Vertical>) {
             outp.lineData.clear()
             for (v2 in inp) {
                 outp.lineData.add {
