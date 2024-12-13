@@ -13,10 +13,10 @@ import v3d.vbos.other.VBOPoints
 import v3d.vbos.other.VBOTriangle
 
 object ComplectFactory {
-    fun createAllComplects(): List<V3dComplect> {
+    fun createAllComplects(cubeSize: Float = 0.02f): List<V3dComplect> {
         val v3dComplects: MutableList<V3dComplect> = ArrayList()
         v3dComplects.add(createPointComplect())
-        v3dComplects.add(createCubeComplect())
+        v3dComplects.add(createCubeComplect(cubeSize = cubeSize))
         v3dComplects.add(createTrianglesComplect())
         v3dComplects.add(createLineComplect())
         return v3dComplects

@@ -27,7 +27,7 @@ class ViewInitor {
             var viewFrame: ViewFrame? = null
             val creator = GLCapabilitiesCreator()
             val eventListener = V3dGlMultiEventListener(
-                createAllComplects(),
+                createAllComplects(0.2f),
                 createAllModelComplects(listOf(KinectModel(1f/AppConstants.MAX_MM_ON_V3D))),
                 channelToView)
             SwingUtilities.invokeLater(object : Runnable {

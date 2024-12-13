@@ -27,4 +27,8 @@ class BufferedChannelForView(val id: Int,
     override fun getIdData(): Int {
         return id
     }
+
+    override fun validate(): Boolean {
+        return true
+    }
 }

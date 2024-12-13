@@ -23,6 +23,8 @@ class DepthHandlerImpl(val channel: BufferedChannel<BufferedCloudOfSensor>) : De
                 var mmRes: Int
 
                 it.clear()
+                it.height = KINECT_DEPTH_ROWS
+                it.width = KINECT_DEPTH_COLS
                 for(i in 0..<KINECT_DEPTH_COLS * KINECT_DEPTH_ROWS){
                     mmRes =
                         getTari(((depthDataBytes[i * 2].toInt() and 0xFF)) or ((depthDataBytes[i * 2 + 1].toInt() and 7) shl 8))

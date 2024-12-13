@@ -2,11 +2,12 @@ package sensors.cams.file
 
 import bufferchanel.BufferedChannel
 import bufferchanel.databuffer.BufferedCloudOfSensor
-import clouds.CloudJ
 import files.serialize.KiSerializer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import sensors.cams.Cloudsorce
+import sensors.cams.kinect.KinectConstant.KINECT_DEPTH_COLS
+import sensors.cams.kinect.KinectConstant.KINECT_DEPTH_ROWS
 import serialize.ShortArraySerialize
 
 class CloudSerializer(private val channel: BufferedChannel<BufferedCloudOfSensor>): Cloudsorce {
@@ -35,8 +36,11 @@ class CloudSerializer(private val channel: BufferedChannel<BufferedCloudOfSensor
         return isRun
     }
 
-    fun writeCloud(cloud: BufferedCloudOfSensor) {
-        kiSer.writeObject(cloud.objForSerialize)
+    suspend fun writeCloud() {
+        channel.getFirstDataForRead()?.let {
+            kiSer.writeObject(it.objForSerialize)
+            channel.endWrite(it)
+        }
     }
 
     private class EventThread(private val kiSer: KiSerializer<ShortArraySerialize>,
@@ -63,6 +67,8 @@ class CloudSerializer(private val channel: BufferedChannel<BufferedCloudOfSensor
                 fileCloud?.let {
                     runBlocking(Dispatchers.IO){
                         channel.getDataForWrite()?.let {
+                            it.width = KINECT_DEPTH_COLS
+                            it.height = KINECT_DEPTH_ROWS
                             it.copyOf(fileCloud)
                             channel.endWrite(it)
                         }

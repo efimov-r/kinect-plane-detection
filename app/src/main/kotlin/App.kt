@@ -3,8 +3,6 @@ package era.app
 import bufferchanel.BufferedChannel
 import bufferchanel.databuffer.BufferedChannelForView
 import bufferchanel.databuffer.BufferedCloudOfSensor
-import viewdata.transferdata.ToViewText
-import clouds.CloudJ
 import era.utils.files.KiLogger
 import keyboard.Keys
 import kotlinx.coroutines.Dispatchers
@@ -14,6 +12,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import sensors.cams.file.CloudSerializer
 import sensors.cams.kinect.Kinect
+import viewdata.transferdata.ToViewText
+import sensors.cams.kinect.KinectConstant.KINECT_DEPTH_COLS
+import sensors.cams.kinect.KinectConstant.KINECT_DEPTH_ROWS
 
 fun main() {
     KiLogger.inf("main start")
@@ -22,7 +23,7 @@ fun main() {
     val channelKeyboard = Channel<Char>(Channel.CONFLATED)
 
     val formSensorChannel = BufferedChannel {
-        return@BufferedChannel BufferedCloudOfSensor(640 * 480, "cloud of sensor", it)
+        return@BufferedChannel BufferedCloudOfSensor(KINECT_DEPTH_ROWS*KINECT_DEPTH_COLS, "cloud of sensor", it)
     }
 
     val toViewChannel = BufferedChannel {
@@ -40,11 +41,8 @@ fun main() {
                 if(state == State.DO_JOB) {
                     JobBuf.execute(formSensorChannel, toViewChannel, channelText)
                 } else if(state == State.SAVE) {
-                    formSensorChannel.getFirstDataForRead()?.let {
-                        cloudSerializer.writeCloud(it)
-                        formSensorChannel.endWrite(it)
-                        KiLogger.inf("End save cloud to file")
-                    }
+                    cloudSerializer.writeCloud()
+                    KiLogger.inf("End save cloud to file")
                     state = State.DO_JOB
                 } else {
                     delay(100)

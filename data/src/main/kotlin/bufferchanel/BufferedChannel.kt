@@ -1,6 +1,7 @@
 package bufferchanel
 
 import bufferchanel.databuffer.DataForBufferedChannel
+import era.utils.files.KiLogger
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.*
@@ -32,8 +33,13 @@ class BufferedChannel<T: DataForBufferedChannel>(sizeBuffer: Int = 10, dataCreat
     suspend fun endWrite(data: T) {
         mutex.withLock{
             findInternalData(data) {
-                it.dateWrite = Date().time
-                it.state = InternalState.READY
+                if(data.validate()) {
+                    it.dateWrite = Date().time
+                    it.state = InternalState.READY
+                } else {
+                    it.state = InternalState.START
+                    KiLogger.err("Error validate write data in buffered channel")
+                }
             }
         }
     }
