@@ -5,21 +5,27 @@ import bufferchanel.databuffer.BufferedChannelForView
 import bufferchanel.databuffer.BufferedCloudOfSensor
 import clouds.ChankCloudJ
 import clouds.CloudJ
+import era.app.AppConstants.COS_GROUP_PERPENDIC
 import era.app.utils.neighbour.NeighbourHelper
 import era.app.utils.subclouders.Chanker
 import era.app.utils.subclouders.CloudOfSensorCompressor
 import era.app.utils.writers.WriterCloud
+import era.utils.files.KiLogger
 import era.utils.time.Span
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import vectors.V2Vertical
+import vectors.Vector3
 import vectors.Vector3ChildedShort
 import viewdata.transferdata.ToViewText
+import java.util.Date
 
 class JobBuf {
     companion object{
 
         val span = Span()
+        val span2 = Span()
+        val span3 = Span()
 
         suspend fun execute(
             formSensorChannel: BufferedChannel<BufferedCloudOfSensor>,
@@ -29,12 +35,27 @@ class JobBuf {
             coroutineScope {
                 formSensorChannel.getFirstDataForRead()?.let { readCloud ->
                     toViewChannel.getDataForWriteOrRewriteOld()?.let { writeCloud ->
+                        span.resetTimer()
 
-                        val launchPoint = doJobPointToView(readCloud, writeCloud, channelText)
-                        val launchCube = doJobCube(readCloud, writeCloud)
+                        writeCloud.cubeData.clear()
+                        writeCloud.lineData.clear()
+                        writeCloud.pointData.clear()
+                        writeCloud.triangleData.clear()
 
-                        launchPoint.join()
-                        launchCube.join()
+                        val text = "         min      max \n" +
+                                "X:      ${readCloud.minX}    ${readCloud.maxX}\n" +
+                                "Y:      ${readCloud.minY}    ${readCloud.maxY}\n" +
+                                "Z:      ${readCloud.minZ}    ${readCloud.maxZ}"
+                        channelText.send(ToViewText(text))
+
+
+                        val fastCloud = CloudOfSensorCompressor.compressHexadrupleRare(readCloud)
+
+                        listOf(
+                            doJobPointToView(fastCloud, writeCloud),
+                            doJobCube(fastCloud, writeCloud)
+                        ).joinAll()
+                        span.middleCircle(1000, "All")
 
                         toViewChannel.endWrite(writeCloud)
                     }
@@ -44,103 +65,83 @@ class JobBuf {
         }
 
         fun CoroutineScope.doJobCube(
-            readCloud: BufferedCloudOfSensor, writeCloud: BufferedChannelForView
+            fastCloud: CloudJ, writeCloud: BufferedChannelForView
         ):Job = launch(Dispatchers.IO) {
 //            span.resetTimer()
-            val fastCloud = CloudOfSensorCompressor.compressHexadrupleRare(readCloud)
+            span3.resetTimer()
             val verticalVectors = createVerticalVectors(fastCloud)
+
 //            WriterCloud.viewVerticalVectors(verticalVectors, writeCloud.lineData)
+//            writeCloud.lineData.clear()
 
-            val asyncList: ArrayList<Deferred<Vector3ChildedShort?>>  = ArrayList()
-
-            for (createVerticalVector in verticalVectors) {
-                asyncList.add(async(Dispatchers.IO) {
-                    val chank = Chanker.getChank(
-                        fastCloud,
-                        createVerticalVector,
-                        (AppConstants.STEP_CREATE_VERTICAL_VECTORS/3).toShort()
-                    )
-                    val i = findNearestPointCentrMaxYInChank(chank)
-                    if(i == null) {
-                        return@async null
+            val v3List = verticalVectors.map { verticalVector ->
+                async(Dispatchers.IO) {
+                    val chank = Chanker.getChank(fastCloud, verticalVector, (AppConstants.STEP_CREATE_VERTICAL_VECTORS / 3).toShort())
+                    findNearestPointCentrSrYInChank(chank)?.let {
+                        Vector3ChildedShort(it.x, it.y, it.z)
                     }
-                    return@async Vector3ChildedShort(
-                        chank.getGlobX(i),
-                        chank.getGlobY(i),
-                        chank.getGlobZ(i)
-                    )
-                })
-            }
 
-            val v3List : ArrayList<Vector3ChildedShort> = ArrayList()
-            asyncList.forEach {
-                it.await()?.let { v3->
-                    v3List.add(v3)
                 }
-            }
-            NeighbourHelper.findAndFilter(v3List)
-//            v3List.forEach {
-//                it.createPerpendicularVectors()
-//            }
-            v3List.get(10).createPerpendicularVectors()
+            }.awaitAll().filterNotNull().toMutableList()
+            span3.middleCircle(1000, "chank")
 
-            WriterCloud.viewPerpendicular(v3List, writeCloud.lineData)
+            NeighbourHelper.findAndFilter(v3List)
+
+            span2.resetTimer()
+            v3List.forEach { v ->
+                v.createPerpendicularVectors()
+                v.filterPerpendicularVectors()
+                v.groupPerpendicularVectors(COS_GROUP_PERPENDIC)
+                WriterCloud.viewPerpendicular(v, writeCloud.lineData)
+            }
+            span2.middleCircle(1000, "v3List")
+
 
 
 //            span.middleCircle(100, "asdsa")
 
-            WriterCloud.writeCube(v3List, writeCloud.cubeData)
+//            WriterCloud.writeCubes(v3List, writeCloud.cubeData)
+//            WriterCloud.writeCubeWithChild(v3List.get(10), writeCloud.cubeData)
         }
 
-        fun findNearestPointCentrMaxYInChank(chank: ChankCloudJ):Int? {
+        fun findNearestPointCentrSrYInChank(chank: ChankCloudJ): Vector3<Short>? {
             var minLength = Int.MAX_VALUE
             var length: Int
-            var result:Int? = null
+            var result:Vector3<Short>? = null
 
             chank.forEach{x, y, z, i ->
-                length = ((x-chank.centrX)*(x-chank.centrX)) + ((y-chank.maxY) * (y-chank.maxY)) + ((z-chank.centrZ) * (z-chank.centrZ))
+                val srY = chank.maxY - chank.minY
+                length = ((x-chank.centrX)*(x-chank.centrX)) + ((y-srY) * (y-srY)) + ((z-chank.centrZ) * (z-chank.centrZ))
                 if(length < minLength) {
                     minLength = length
-                    result = i
+                    result = Vector3(x, y, z)
                 }
             }
 
             return result
         }
 
-        fun CoroutineScope.doJobPointToView(inp: BufferedCloudOfSensor,
-                                            outp: BufferedChannelForView,
-                                            channelText: Channel<ToViewText>
+        fun CoroutineScope.doJobPointToView(fastCloud: CloudJ,
+                                            outp: BufferedChannelForView
         ): Job = launch(Dispatchers.IO) {
-            val text = "         min      max \n" +
-                    "X:      ${inp.minX}    ${inp.maxX}\n" +
-                    "Y:      ${inp.minY}    ${inp.maxY}\n" +
-                    "Z:      ${inp.minZ}    ${inp.maxZ}"
-            val compressHexadruple = CloudOfSensorCompressor.compressHexadrupleRare(inp)
-            channelText.send(ToViewText(text))
-
-            WriterCloud.writePoint(compressHexadruple, outp.pointData)
+            WriterCloud.writePoint(fastCloud, outp.pointData)
         }
 
+        private fun createVerticalVectors(inp: CloudJ): List<V2Vertical> {
+            if((inp.maxX ?: Short.MIN_VALUE).toInt() - (inp.minX ?: Short.MAX_VALUE).toInt() < AppConstants.MIN_SIZE_CREATE_VERTICAL_VECTORS) { //todo kostili
+                return emptyList()
+            }
+            if((inp.maxZ ?: Short.MIN_VALUE).toInt() - (inp.minZ ?: Short.MAX_VALUE).toInt() < AppConstants.MIN_SIZE_CREATE_VERTICAL_VECTORS) {
+                return emptyList()
+            }
 
-        private fun createVerticalVectors(inp: CloudJ): ArrayList<V2Vertical> {
             val res = ArrayList<V2Vertical>()
-            if(inp.maxX == null || inp.minX == null || inp.maxX!! - inp.minX!! < AppConstants.MIN_SIZE_CREATE_VERTICAL_VECTORS) {
-                return res
-            }
-            if(inp.maxZ == null || inp.minZ == null || inp.maxZ!! - inp.minZ!! < AppConstants.MIN_SIZE_CREATE_VERTICAL_VECTORS) {
-                return res
-            }
-            var curX: Short = (inp.minX!! + AppConstants.STEP_CREATE_VERTICAL_VECTORS).toShort()
-            var curZ: Short
-            while (curX <= inp.maxX!!) {
-                curZ = (inp.minZ!! + AppConstants.STEP_CREATE_VERTICAL_VECTORS).toShort()
-                while(curZ <= inp.maxZ!!) {
-                    res.add(V2Vertical(curX, curZ))
-                    curZ = (curZ + AppConstants.STEP_CREATE_VERTICAL_VECTORS).toShort()
+            for (curX in inp.minX!!..inp.maxX!! step AppConstants.STEP_CREATE_VERTICAL_VECTORS.toInt()) {
+                for (curZ in inp.minZ!!..inp.maxZ!! step AppConstants.STEP_CREATE_VERTICAL_VECTORS.toInt()) {
+                    res.add(V2Vertical(curX.toShort(), curZ.toShort()))
                 }
-                curX = (curX + AppConstants.STEP_CREATE_VERTICAL_VECTORS).toShort()
             }
+
             return res
         }
     }

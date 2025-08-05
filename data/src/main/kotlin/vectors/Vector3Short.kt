@@ -1,17 +1,19 @@
 package vectors
 
+import kotlin.math.sqrt
+
 open class Vector3Short(x: Short, y: Short, z: Short) : Vector3<Short>(x, y, z) {
-    operator fun plus(other: Vector3Short) = Vector3Short(
+    infix fun plus(other: Vector3Short) = Vector3Short(
         (x + other.x).toShort(),
         (y + other.y).toShort(),
         (z + other.z).toShort())
 
-    operator fun minus(other: Vector3Short) = Vector3Short(
+    infix fun minus(other: Vector3Short) = Vector3Short(
         (x - other.x).toShort(),
         (y - other.y).toShort(),
         (z - other.z).toShort())
 
-    operator fun times(scalar: Double) = Vector3Short(
+    infix fun times(scalar: Double) = Vector3Short(
         (x * scalar).toInt().toShort(),
         (y * scalar).toInt().toShort(),
         (z * scalar).toInt().toShort())
@@ -19,9 +21,20 @@ open class Vector3Short(x: Short, y: Short, z: Short) : Vector3<Short>(x, y, z) 
     // Векторное произведение
     infix fun cross(other: Vector3Short): Vector3Short {
         return Vector3Short(
-            (y * other.z - z * other.y).toShort(),
-            (z * other.x - x * other.z).toShort(),
-            (x * other.y - y * other.x).toShort()
+            ((y * other.z - z * other.y)/100).toShort(),
+            ((z * other.x - x * other.z)/100).toShort(),
+            ((x * other.y - y * other.x)/100).toShort()
         )
+    }
+
+    // Вычисление длины вектора
+    fun length(): Double = sqrt((x * x + y * y + z * z).toDouble())
+
+    // Скалярное произведение двух векторов
+    fun dot(other: Vector3Short): Double = (x * other.x + y * other.y + z * other.z).toDouble()
+
+
+    override fun toString(): String {
+        return "x: $x, y: $y, z: $z"
     }
 }

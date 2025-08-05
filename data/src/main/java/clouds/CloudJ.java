@@ -23,23 +23,14 @@ public class CloudJ extends ShortListJ {
 
     public void addGlob(short x, short y, short z) {
         super.add(x);
-        if(x < minX) {
-            minX = x;
-        } else if(x > maxX) {
-            maxX = x;
-        }
+        if(x < minX) minX = x;
+        if(x > maxX) maxX = x;
         super.add(y);
-        if(y < minY) {
-            minY = y;
-        } else if(y > maxY) {
-            maxY = y;
-        }
+        if(y < minY) minY = y;
+        if(y > maxY) maxY = y;
         super.add(z);
-        if(z < minZ) {
-            minZ = z;
-        } else if(z > maxZ) {
-            maxZ = z;
-        }
+        if(z < minZ) minZ = z;
+        if(z > maxZ) maxZ = z;
     }
 
     public interface Call {

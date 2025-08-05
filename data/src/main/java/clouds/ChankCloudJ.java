@@ -5,6 +5,7 @@ import serialize.ShortArraySerialize;
 
 public class ChankCloudJ extends ShortListJ {
     private short maxY = Short.MIN_VALUE;
+    private short minY = Short.MAX_VALUE;
     private short centrX;
     private short centrZ;
     public ChankCloudJ(int initialCapacity, String name) {
@@ -14,9 +15,8 @@ public class ChankCloudJ extends ShortListJ {
     public void addGlob(short x, short y, short z) {
         super.add(x);
         super.add(y);
-        if(y > maxY) {
-            maxY = y;
-        }
+        if(y > maxY) maxY = y;
+        if(y < minY) minY = y;
         super.add(z);
     }
 
@@ -45,6 +45,7 @@ public class ChankCloudJ extends ShortListJ {
     public void copyOf(ChankCloudJ inp) {
         super.copyOf(inp);
         this.maxY = inp.maxY;
+        this.minY = inp.minY;
     }
 
     public void copyOf(ShortArraySerialize inp) {
@@ -62,11 +63,17 @@ public class ChankCloudJ extends ShortListJ {
     public void clear() {
         super.clear();
         maxY = Short.MIN_VALUE;
+        minY = Short.MAX_VALUE;
     }
 
     public Short getMaxY() {
         if(maxY == Short.MIN_VALUE) return null;
         return maxY;
+    }
+
+    public Short getMinY() {
+        if(minY == Short.MAX_VALUE) return null;
+        return minY;
     }
 
     public short getCentrX() {

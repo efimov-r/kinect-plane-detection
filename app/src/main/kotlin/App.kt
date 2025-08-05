@@ -38,14 +38,18 @@ fun main() {
     runBlocking {
         launch(Dispatchers.IO){
             while(true) {
-                if(state == State.DO_JOB) {
-                    JobBuf.execute(formSensorChannel, toViewChannel, channelText)
-                } else if(state == State.SAVE) {
-                    cloudSerializer.writeCloud()
-                    KiLogger.inf("End save cloud to file")
-                    state = State.DO_JOB
-                } else {
-                    delay(100)
+                when(state) {
+                    State.DO_JOB -> {
+                        JobBuf.execute(formSensorChannel, toViewChannel, channelText)
+                    }
+                    State.SAVE -> {
+                        cloudSerializer.writeCloud()
+                        KiLogger.inf("End save cloud to file")
+                        state = State.DO_JOB
+                    }
+                    else -> {
+                        delay(100)
+                    }
                 }
             }
         }
