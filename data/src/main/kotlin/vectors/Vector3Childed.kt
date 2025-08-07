@@ -1,100 +1,108 @@
 package vectors
 
-import kotlin.math.PI
-import kotlin.math.acos
-
 class Vector3ChildedShort(x: Short,
                         y: Short,
                         z: Short,
                         val neighbours: ArrayList<Vector3Short> = ArrayList(),
-                        val neighboursPerpendicularVectors: ArrayList<Vector3Short> = ArrayList()) : Vector3Short(x, y, z) {
+                        val vecs: ArrayList<Vector3Short> = ArrayList()) : Vector3Short(x, y, z) { //neighboursPerpendicularVectors
 
     fun createPerpendicularVectors() {
-//        println("neighbours.size: ${neighbours.size}")
-        for(i in 0..<neighbours.size) {
-            for(j in (i+1)..<neighbours.size) {
+        for (i in 0 until neighbours.size) {
+            val n1x = (neighbours[i].x - x)
+            val n1y = (neighbours[i].y - y)
+            val n1z = (neighbours[i].z - z)
 
-                val n1 = neighbours.get(i)
-                val n2 = neighbours.get(j)
+            for (j in i + 1 until neighbours.size) {
+                val n2x = (neighbours[j].x - x)
+                val n2y = (neighbours[j].y - y)
+                val n2z = (neighbours[j].z - z)
 
-                val n10 = n1 minus Vector3Short(x, y, z)
-                val n20 = n2 minus Vector3Short(x, y, z)
+                // Векторное произведение n2 × n1
+                val px = n2y * n1z - n2z * n1y
+                val py = n2z * n1x - n2x * n1z
+                val pz = n2x * n1y - n2y * n1x
 
-                var p = n20 cross n10
-                if(p.y > 0) {
-                    p = Vector3Short((p.x * -1).toShort(), (p.y*-1).toShort(), (p.z*-1).toShort())
-                }
+                val finalPx = if (py > 0) -px else px
+                val finalPy = if (py > 0) -py else py
+                val finalPz = if (py > 0) -pz else pz
 
-                neighboursPerpendicularVectors.add(p)
+                vecs.add(Vector3Short((finalPx/100).toShort(), (finalPy/100).toShort(), (finalPz/100).toShort()))
             }
         }
     }
 
     fun filterPerpendicularVectors() {
-        neighboursPerpendicularVectors.removeIf { v1->
-            val v2 = Vector3Short(0 ,-1, 0)
-            // Вычисляем скалярное произведение
-            val dotProduct = v1.dot(v2)
+        val v2 = Vector3Short(0, -1, 0)
+        val v2Len2 = 1  // (0, -1, 0) → длина² = 1
 
-            // Вычисляем произведение длин векторов
-            val lengthProduct = v1.length() * v2.length()
+        vecs.removeIf { v1 ->
+            val dot = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z
+            val v1Len2 = (v1.x * v1.x + v1.y * v1.y + v1.z * v1.z).toDouble()
 
-            // Вычисляем косинус угла
-            val cosAngle = dotProduct / lengthProduct
 
-            // Проверяем, что угол меньше 45 градусов
-            // 45 градусов в радианах = PI / 4
-            return@removeIf acos(cosAngle) > PI / 4
+            // избегаем деления на ноль
+            if (v1Len2 == 0.0) return@removeIf true
+
+            val cos2 = (dot * dot).toDouble() / (v1Len2 * v2Len2)  // cos²(θ)
+            // cos(45°) ≈ 0.7071 → cos² ≈ 0.5
+            return@removeIf cos2 < 0.5
         }
     }
 
     fun groupPerpendicularVectors(cosAngleMin: Double) {
+        if (vecs.size < 2) return
+
+        val lengthsSquared = vecs.map { it.length() }
+
+        val cos2Min = cosAngleMin * cosAngleMin
         val res = mutableListOf<MutableList<Vector3Short>>()
-        for(i in 0..<neighboursPerpendicularVectors.size) {
-            for(j in i+1..<neighboursPerpendicularVectors.size) {
-                if(calckCosAngle(neighboursPerpendicularVectors[i], neighboursPerpendicularVectors[j]) > cosAngleMin) {
-                    val r1 = mutableListOf(neighboursPerpendicularVectors[i], neighboursPerpendicularVectors[j])
-                    for(k in j+1..<neighboursPerpendicularVectors.size) {
-                        if(calckCosAngle(neighboursPerpendicularVectors[i], neighboursPerpendicularVectors[k])> cosAngleMin) {
-                            r1.add(neighboursPerpendicularVectors[k])
+
+        for (i in vecs.indices) {
+            for (j in i + 1 until vecs.size) {
+                val dot = vecs[i].dot(vecs[j])
+                val cos2 = (dot * dot) / (lengthsSquared[i] * lengthsSquared[j])
+
+                if (cos2 > cos2Min) {
+                    val group = mutableListOf(vecs[i], vecs[j])
+
+                    for (k in j + 1 until vecs.size) {
+                        val dot2 = vecs[i].dot(vecs[k])
+                        val cos2k = (dot2 * dot2) / (lengthsSquared[i] * lengthsSquared[k])
+
+                        if (cos2k > cos2Min) {
+                            group.add(vecs[k])
                         }
                     }
-                    res.add(r1)
+
+                    res.add(group)
                 }
             }
         }
 
-        var maxNum: Int? = null
-        var max = 0
-        for(i in 0..<res.size) {
-            val r1 = res[i]
-            if(r1.size > max) {
-                max = r1.size
-                maxNum = i
-            }
-        }
+        val maxGroup = res.maxByOrNull { it.size }
+        val minGroupSize = vecs.size / 2
 
-        if(maxNum != null && max > neighboursPerpendicularVectors.size/2) {
-            neighboursPerpendicularVectors.removeIf { true }
-            val rr = res[maxNum]
+        vecs.clear()
+
+        if (maxGroup != null && maxGroup.size > minGroupSize) {
             var rx = 0
             var ry = 0
             var rz = 0
-            rr.forEach { v->
-                rx += v.x
-                ry += v.y
-                rz += v.z
-            }
-            neighboursPerpendicularVectors.add(Vector3Short((rx/rr.size).toShort(), (ry/rr.size).toShort(), (rz/rr.size).toShort()))
-        } else {
-            neighboursPerpendicularVectors.removeIf { true }
-        }
-    }
 
-    private fun calckCosAngle(v1: Vector3Short, v2: Vector3Short): Double {
-        val dotProduct = v1.dot(v2)
-        val lengthProduct = v1.length() * v2.length()
-        return dotProduct / lengthProduct
+            for (v in maxGroup) {
+                rx += v.x.toInt()
+                ry += v.y.toInt()
+                rz += v.z.toInt()
+            }
+
+            val avg = Vector3Short(
+                (rx / maxGroup.size).toShort(),
+                (ry / maxGroup.size).toShort(),
+                (rz / maxGroup.size).toShort()
+            )
+
+            vecs.add(avg)
+        }
     }
 
     override fun equals(other: Any?): Boolean {

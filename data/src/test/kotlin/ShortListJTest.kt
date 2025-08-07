@@ -1,4 +1,4 @@
-import elementlist.ShortListJ
+import elementlist.ShortList
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
@@ -7,7 +7,7 @@ internal class ShortListJTest {
     @Test
     fun testResizeList() {
         try {
-            val list = ShortListJ(10, "test cloud")
+            val list = ShortList(10, "test cloud")
             for(i in 0..10000) {
                 list.add(i.toShort())
             }

@@ -1,10 +1,10 @@
 package bufferchanel.databuffer
 
-import clouds.CloudJ
+import clouds.Cloud
 
 class BufferedCloudOfSensor(initialCapacity: Int = 10,
                             name: String = "",
-                            val id: Int) : CloudJ(initialCapacity, name), DataForBufferedChannel {
+                            val id: Int) : Cloud(initialCapacity, name), DataForBufferedChannel {
 
     var width: Int = 0
     var height: Int = 0

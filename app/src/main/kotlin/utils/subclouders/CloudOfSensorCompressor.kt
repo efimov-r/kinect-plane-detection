@@ -1,11 +1,11 @@
 package era.app.utils.subclouders
 
 import bufferchanel.databuffer.BufferedCloudOfSensor
-import clouds.CloudJ
+import clouds.Cloud
 
 object CloudOfSensorCompressor {
-    fun compressHexadruple(inp: BufferedCloudOfSensor) : CloudJ{
-        val res = CloudJ(inp.size()/16, "cloud/16")
+    fun compressHexadruple(inp: BufferedCloudOfSensor) : Cloud{
+        val res = Cloud(inp.size()/16, "cloud/16")
         if(!inp.validate()) {
             return res
         }
@@ -43,8 +43,8 @@ object CloudOfSensorCompressor {
     }
 
     //берет среднее от 4 из 16 точек, по центру
-    fun compressHexadrupleLazy(inp: BufferedCloudOfSensor) : CloudJ{
-        val res = CloudJ(inp.size()/16, "cloud/16")
+    fun compressHexadrupleLazy(inp: BufferedCloudOfSensor) : Cloud{
+        val res = Cloud(inp.size()/16, "cloud/16")
         if(!inp.validate()) {
             return res
         }
@@ -112,8 +112,8 @@ object CloudOfSensorCompressor {
     }
 
     //берет точку одну из 2*2 из центра поля 16*16, ненулевую если она есть в поле 2*2
-    fun compressHexadrupleRare(inp: BufferedCloudOfSensor) : CloudJ{
-        val res = CloudJ(inp.size()/16, "cloud/16")
+    fun compressHexadrupleRare(inp: BufferedCloudOfSensor) : Cloud{
+        val res = Cloud(inp.size()/16, "cloud/16")
         if(!inp.validate()) {
             return res
         }

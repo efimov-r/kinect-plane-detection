@@ -1,6 +1,6 @@
 package era.app.utils.writers
 
-import clouds.CloudJ
+import clouds.Cloud
 import era.app.AppConstants
 import vectors.V2Vertical
 import vectors.Vector3ChildedShort
@@ -14,7 +14,7 @@ object WriterCloud {
     fun writeCubes(vectors: MutableList<Vector3ChildedShort>, toView: ElementList<Cube>) {
         var v: Vector3ChildedShort? = null
         vectors.forEach{
-            if(it.neighboursPerpendicularVectors.size > 0) {
+            if(it.vecs.size > 0) {
                 v = it
             }
         }
@@ -55,7 +55,7 @@ object WriterCloud {
         return false
     }
 
-    fun writePoint(cloud: CloudJ, toView: ElementList<Point>) {
+    fun writePoint(cloud: Cloud, toView: ElementList<Point>) {
         cloud.forEach { x, y, z ->
             toView.add {
                 it.z = z.toFloat()/ AppConstants.MAX_MM_ON_V3D
@@ -65,8 +65,22 @@ object WriterCloud {
         }
     }
 
+    fun viewNullVector(v3: Vector3Short, toView: ElementList<Line>, color: Float) {
+            toView.add {
+                it.v1.y = v3.y.toFloat() / AppConstants.MAX_MM_ON_V3D
+                it.v1.x = v3.x.toFloat() / AppConstants.MAX_MM_ON_V3D
+                it.v1.z = v3.z.toFloat() / AppConstants.MAX_MM_ON_V3D
+                it.v1.color = color
+
+                it.v2.y = 0f / AppConstants.MAX_MM_ON_V3D
+                it.v2.x = 0f / AppConstants.MAX_MM_ON_V3D
+                it.v2.z = 0f / AppConstants.MAX_MM_ON_V3D
+                it.v2.color = color
+            }
+    }
+
     fun viewPerpendicular(v3: Vector3ChildedShort, toView: ElementList<Line>) {
-        v3.neighboursPerpendicularVectors.forEach { pv ->
+        v3.vecs.forEach { pv ->
             toView.add {
                 it.v1.y = v3.y.toFloat() / AppConstants.MAX_MM_ON_V3D
                 it.v1.x = v3.x.toFloat() / AppConstants.MAX_MM_ON_V3D

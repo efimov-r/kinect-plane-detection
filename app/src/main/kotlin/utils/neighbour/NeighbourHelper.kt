@@ -7,19 +7,28 @@ import vectors.Vector3
 import vectors.Vector3ChildedShort
 
 object NeighbourHelper {
-    fun findAndFilter(vectors: MutableList<Vector3ChildedShort>){
-        val sqrMaxLength = (STEP_CREATE_VERTICAL_VECTORS * MULTIPLICIT_VITH_NEIGHBOURS_LENGTH) * (STEP_CREATE_VERTICAL_VECTORS * MULTIPLICIT_VITH_NEIGHBOURS_LENGTH)
-        vectors.forEach { mainV->
-            vectors.forEach{childV->
-                if(calkSqrLength(mainV, childV) < sqrMaxLength && mainV != childV) {
+    fun findAndFilter(vectors: MutableList<Vector3ChildedShort>) {
+        val sqrMaxLength = STEP_CREATE_VERTICAL_VECTORS * MULTIPLICIT_VITH_NEIGHBOURS_LENGTH
+        val maxDistSqr = sqrMaxLength * sqrMaxLength
+
+        for (i in vectors.indices) {
+            val mainV = vectors[i]
+
+            for (j in i + 1 until vectors.size) {
+                val childV = vectors[j]
+
+                val dx = mainV.x - childV.x
+                val dy = mainV.y - childV.y
+                val dz = mainV.z - childV.z
+                val distSqr = dx * dx + dy * dy + dz * dz
+
+                if (distSqr < maxDistSqr) {
                     mainV.neighbours.add(childV)
+                    childV.neighbours.add(mainV) // двусторонняя связь
                 }
             }
         }
-        vectors.removeIf { it.neighbours.size < NEIGHBOURS_MIN_COUNT }
-    }
 
-    private fun calkSqrLength(v1: Vector3<Short>, v2: Vector3<Short>) : Int {
-        return ((v1.x - v2.x) * (v1.x - v2.x)) + ((v1.y - v2.y) * (v2.y - v2.y)) + ((v1.z - v2.z) * (v1.z - v2.z))
+        vectors.removeIf { it.neighbours.size < NEIGHBOURS_MIN_COUNT }
     }
 }

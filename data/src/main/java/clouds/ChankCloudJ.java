@@ -1,13 +1,10 @@
 package clouds;
 
-import elementlist.ShortListJ;
+import elementlist.ShortList;
 import serialize.ShortArraySerialize;
 
-public class ChankCloudJ extends ShortListJ {
-    private short maxY = Short.MIN_VALUE;
-    private short minY = Short.MAX_VALUE;
-    private short centrX;
-    private short centrZ;
+public class ChankCloudJ extends ShortList {
+
     public ChankCloudJ(int initialCapacity, String name) {
         super(initialCapacity*3, name);
     }
@@ -15,37 +12,21 @@ public class ChankCloudJ extends ShortListJ {
     public void addGlob(short x, short y, short z) {
         super.add(x);
         super.add(y);
-        if(y > maxY) maxY = y;
-        if(y < minY) minY = y;
         super.add(z);
     }
 
     public interface Call {
-        void call(short x, short y, short z, int i);
+        void call(short x, short y, short z);
     }
 
     public void forEach(Call call) {
         for(int i = 0; i < (super.size()/3); i++) {
-            call.call(elementData[i*3], elementData[i*3+1], elementData[i*3+2], i);
+            call.call(elementData[i*3], elementData[i*3+1], elementData[i*3+2]);
         }
-    }
-
-    public short getGlobX(int i) {
-        return elementData[i*3];
-    }
-
-    public short getGlobY(int i) {
-        return elementData[i*3+1];
-    }
-
-    public short getGlobZ(int i) {
-        return elementData[i*3+2];
     }
 
     public void copyOf(ChankCloudJ inp) {
         super.copyOf(inp);
-        this.maxY = inp.maxY;
-        this.minY = inp.minY;
     }
 
     public void copyOf(ShortArraySerialize inp) {
@@ -62,33 +43,5 @@ public class ChankCloudJ extends ShortListJ {
     @Override
     public void clear() {
         super.clear();
-        maxY = Short.MIN_VALUE;
-        minY = Short.MAX_VALUE;
-    }
-
-    public Short getMaxY() {
-        if(maxY == Short.MIN_VALUE) return null;
-        return maxY;
-    }
-
-    public Short getMinY() {
-        if(minY == Short.MAX_VALUE) return null;
-        return minY;
-    }
-
-    public short getCentrX() {
-        return centrX;
-    }
-
-    public void setCentrX(short centrX) {
-        this.centrX = centrX;
-    }
-
-    public short getCentrZ() {
-        return centrZ;
-    }
-
-    public void setCentrZ(short centrZ) {
-        this.centrZ = centrZ;
     }
 }
