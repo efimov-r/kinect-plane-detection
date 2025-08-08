@@ -5,11 +5,11 @@ import sensors.cams.kinect.KinectConstant
 
 class Tari private constructor() {
     private var entities: MutableList<Entity> = ArrayList<Entity>()
-    private val tariMas: IntArray
+    private val tariMas: DoubleArray
 
     init {
         initEntities()
-        this.tariMas = IntArray(KinectConstant.KINECT_DEPTH_MAX + 1)
+        this.tariMas = DoubleArray(KinectConstant.KINECT_DEPTH_MAX + 1)
         for (i in tariMas.indices) {
             tariMas[i] = calcVal(i)
         }
@@ -50,7 +50,7 @@ class Tari private constructor() {
         return null
     }
 
-    private fun calcVal(t: Int): Int {
+    private fun calcVal(t: Int): Double {
         if (t < KinectConstant.KINECT_DEPTH_MIN) {
             return KinectConstant.KINECT_DEPTH_MM_NULL
         }
@@ -61,7 +61,7 @@ class Tari private constructor() {
 
         val res = getEntity(t)
         if (res != null) {
-            return res.max
+            return (res.max).toDouble()
         }
 
         val lastEntity = getLastEntity(t)
@@ -77,7 +77,7 @@ class Tari private constructor() {
 
         val v1 = (t - lastEntity.t) * v
 
-        return v1.toInt() + lastEntity.max
+        return v1 + lastEntity.max
     }
 
     private fun initEntities() {
@@ -273,7 +273,7 @@ class Tari private constructor() {
     companion object {
         private var instance: Tari? = null
 
-        fun getTari(t: Int): Int {
+        fun getTari(t: Int): Double {
             if (t > KinectConstant.KINECT_DEPTH_MAX) {
                 return KinectConstant.KINECT_DEPTH_MM_NULL
             }

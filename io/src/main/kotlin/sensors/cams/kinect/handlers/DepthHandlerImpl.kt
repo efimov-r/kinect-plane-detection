@@ -19,7 +19,7 @@ class DepthHandlerImpl(val channel: BufferedChannel<BufferedCloudOfSensor>) : De
         frame!!.position(0).get(depthDataBytes)
         runBlocking(Dispatchers.IO){
             channel.getDataForWrite()?.let {
-                var mmRes: Int
+                var mmRes: Double
 
                 it.clear()
                 it.height = KINECT_DEPTH_ROWS
@@ -28,10 +28,9 @@ class DepthHandlerImpl(val channel: BufferedChannel<BufferedCloudOfSensor>) : De
                     mmRes =
                         getTari(((depthDataBytes[i * 2].toInt() and 0xFF)) or ((depthDataBytes[i * 2 + 1].toInt() and 7) shl 8))
 
-                    val x = ToCloud.getInstance().calcXFast(mmRes, i % KINECT_DEPTH_COLS).toShort()
-                    val y = ToCloud.getInstance().calcYFast(mmRes, i / KINECT_DEPTH_COLS).toShort()
-                    val z = mmRes.toShort()
-                    it.addGlob(x, y, z)
+                    val x = ToCloud.getInstance().calcXFast(mmRes, i % KINECT_DEPTH_COLS)
+                    val y = ToCloud.getInstance().calcYFast(mmRes, i / KINECT_DEPTH_COLS)
+                    it.add(x.toFloat(), y.toFloat(), mmRes.toFloat())
                 }
                 channel.endWrite(it)
             }

@@ -16,20 +16,12 @@ class ToCloud private constructor() {
         }
     }
 
-    fun calcX(mm: Int, x: Int): Int {
-        return (calcTan(x, KinectConstant.KINECT_DEPTH_COLS, 57.0) * mm).toInt()
+    fun calcXFast(mm: Double, x: Int): Double {
+        return xTanMas[x] * mm
     }
 
-    fun calcY(mm: Int, y: Int): Int {
-        return (calcTan(y, KinectConstant.KINECT_DEPTH_ROWS, 43.0) * mm).toInt()
-    }
-
-    fun calcXFast(mm: Int, x: Int): Int {
-        return (xTanMas[x] * mm).toInt()
-    }
-
-    fun calcYFast(mm: Int, y: Int): Int {
-        return (xTanMas[y] * mm).toInt()
+    fun calcYFast(mm: Double, y: Int): Double {
+        return xTanMas[y] * mm
     }
 
     private fun calcTan(xy: Int, hw: Int, ug: Double): Double {
@@ -37,7 +29,7 @@ class ToCloud private constructor() {
         val calcY = if(xy > hw05 - 1) xy - hw05 else xy - hw05 - 1
         val onDeg = ug / 2 / (hw05 - 1)
         val deg = onDeg * calcY
-        return tan(Math.toRadians(deg))
+        return tan(Math.toRadians(deg.toDouble()))
     }
 
     companion object {

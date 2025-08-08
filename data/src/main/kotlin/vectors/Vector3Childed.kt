@@ -1,10 +1,10 @@
 package vectors
 
-class Vector3ChildedShort(x: Short,
-                        y: Short,
-                        z: Short,
-                        val neighbours: ArrayList<Vector3Short> = ArrayList(),
-                        val vecs: ArrayList<Vector3Short> = ArrayList()) : Vector3Short(x, y, z) { //neighboursPerpendicularVectors
+class Vector3Childed(x: Float,
+                     y: Float,
+                     z: Float,
+                     val neighbours: ArrayList<Vector3Float> = ArrayList(),
+                     val vecs: ArrayList<Vector3Float> = ArrayList()) : Vector3Float(x, y, z) { //neighboursPerpendicularVectors
 
     fun createPerpendicularVectors() {
         for (i in 0 until neighbours.size) {
@@ -26,13 +26,13 @@ class Vector3ChildedShort(x: Short,
                 val finalPy = if (py > 0) -py else py
                 val finalPz = if (py > 0) -pz else pz
 
-                vecs.add(Vector3Short((finalPx/100).toShort(), (finalPy/100).toShort(), (finalPz/100).toShort()))
+                vecs.add(Vector3Float(finalPx/100, finalPy/100, finalPz/100)) //todo WTF
             }
         }
     }
 
     fun filterPerpendicularVectors() {
-        val v2 = Vector3Short(0, -1, 0)
+        val v2 = Vector3Float(0f, -1f, 0f)
         val v2Len2 = 1  // (0, -1, 0) → длина² = 1
 
         vecs.removeIf { v1 ->
@@ -55,7 +55,7 @@ class Vector3ChildedShort(x: Short,
         val lengthsSquared = vecs.map { it.length() }
 
         val cos2Min = cosAngleMin * cosAngleMin
-        val res = mutableListOf<MutableList<Vector3Short>>()
+        val res = mutableListOf<MutableList<Vector3Float>>()
 
         for (i in vecs.indices) {
             for (j in i + 1 until vecs.size) {
@@ -85,20 +85,20 @@ class Vector3ChildedShort(x: Short,
         vecs.clear()
 
         if (maxGroup != null && maxGroup.size > minGroupSize) {
-            var rx = 0
-            var ry = 0
-            var rz = 0
+            var rx = 0f
+            var ry = 0f
+            var rz = 0f
 
             for (v in maxGroup) {
-                rx += v.x.toInt()
-                ry += v.y.toInt()
-                rz += v.z.toInt()
+                rx += v.x
+                ry += v.y
+                rz += v.z
             }
 
-            val avg = Vector3Short(
-                (rx / maxGroup.size).toShort(),
-                (ry / maxGroup.size).toShort(),
-                (rz / maxGroup.size).toShort()
+            val avg = Vector3Float(
+                rx / maxGroup.size,
+                ry / maxGroup.size,
+                rz / maxGroup.size
             )
 
             vecs.add(avg)
@@ -109,7 +109,7 @@ class Vector3ChildedShort(x: Short,
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as Vector3ChildedShort
+        other as Vector3Childed
 
         return (x == other.x) && (y == other.y) && (z == other.z)
     }

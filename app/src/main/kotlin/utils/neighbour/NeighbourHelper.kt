@@ -3,11 +3,10 @@ package era.app.utils.neighbour
 import era.app.AppConstants.MULTIPLICIT_VITH_NEIGHBOURS_LENGTH
 import era.app.AppConstants.NEIGHBOURS_MIN_COUNT
 import era.app.AppConstants.STEP_CREATE_VERTICAL_VECTORS
-import vectors.Vector3
-import vectors.Vector3ChildedShort
+import vectors.Vector3Childed
 
 object NeighbourHelper {
-    fun findAndFilter(vectors: MutableList<Vector3ChildedShort>) {
+    fun findAndFilter(vectors: MutableList<Vector3Childed>) {
         val sqrMaxLength = STEP_CREATE_VERTICAL_VECTORS * MULTIPLICIT_VITH_NEIGHBOURS_LENGTH
         val maxDistSqr = sqrMaxLength * sqrMaxLength
 

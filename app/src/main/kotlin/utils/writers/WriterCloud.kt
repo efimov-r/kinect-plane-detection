@@ -3,16 +3,16 @@ package era.app.utils.writers
 import clouds.Cloud
 import era.app.AppConstants
 import vectors.V2Vertical
-import vectors.Vector3ChildedShort
-import vectors.Vector3Short
+import vectors.Vector3Childed
+import vectors.Vector3Float
 import viewdata.elementlist.ElementList
 import viewdata.elementlist.elements.Cube
 import viewdata.elementlist.elements.Line
 import viewdata.elementlist.elements.Point
 
 object WriterCloud {
-    fun writeCubes(vectors: MutableList<Vector3ChildedShort>, toView: ElementList<Cube>) {
-        var v: Vector3ChildedShort? = null
+    fun writeCubes(vectors: MutableList<Vector3Childed>, toView: ElementList<Cube>) {
+        var v: Vector3Childed? = null
         vectors.forEach{
             if(it.vecs.size > 0) {
                 v = it
@@ -29,7 +29,7 @@ object WriterCloud {
         }
     }
 
-    fun writeCubeWithChild(vector: Vector3ChildedShort, toView: ElementList<Cube>) {
+    fun writeCubeWithChild(vector: Vector3Childed, toView: ElementList<Cube>) {
         toView.add {
             it.color = 0f
             it.y = vector.y.toFloat() / AppConstants.MAX_MM_ON_V3D
@@ -47,7 +47,7 @@ object WriterCloud {
         }
     }
 
-    private fun isThisNeighbours(vectors: ArrayList<Vector3Short>, v: Vector3ChildedShort): Boolean {
+    private fun isThisNeighbours(vectors: ArrayList<Vector3Float>, v: Vector3Childed): Boolean {
         vectors.forEach {
             if(v.equals(it))
                 return true
@@ -65,7 +65,7 @@ object WriterCloud {
         }
     }
 
-    fun viewNullVector(v3: Vector3Short, toView: ElementList<Line>, color: Float) {
+    fun viewNullVector(v3: Vector3Float, toView: ElementList<Line>, color: Float) {
             toView.add {
                 it.v1.y = v3.y.toFloat() / AppConstants.MAX_MM_ON_V3D
                 it.v1.x = v3.x.toFloat() / AppConstants.MAX_MM_ON_V3D
@@ -79,7 +79,7 @@ object WriterCloud {
             }
     }
 
-    fun viewPerpendicular(v3: Vector3ChildedShort, toView: ElementList<Line>) {
+    fun viewPerpendicular(v3: Vector3Childed, toView: ElementList<Line>) {
         v3.vecs.forEach { pv ->
             toView.add {
                 it.v1.y = v3.y.toFloat() / AppConstants.MAX_MM_ON_V3D
