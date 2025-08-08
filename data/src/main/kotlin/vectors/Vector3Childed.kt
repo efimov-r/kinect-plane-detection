@@ -26,7 +26,7 @@ class Vector3Childed(x: Float,
                 val finalPy = if (py > 0) -py else py
                 val finalPz = if (py > 0) -pz else pz
 
-                vecs.add(Vector3Float(finalPx/100, finalPy/100, finalPz/100)) //todo WTF
+                vecs.add(Vector3Float(finalPx, finalPy, finalPz))
             }
         }
     }

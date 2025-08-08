@@ -69,7 +69,7 @@ open class Cloud(initialCapacity: Int = 1000, name: String = ""){
     open fun maxZ() : Float? = zArray.maxOrNull()
 
     val objForSerialize: ShortArraySerialize
-        get() { //todo
+        get() { //todo file!
             val elementData = ShortArray(size*3)
             var i = 0
             forEach { x, y, z ->
@@ -84,13 +84,13 @@ open class Cloud(initialCapacity: Int = 1000, name: String = ""){
         }
 
     fun copyOf(inp: ShortArraySerialize?) {
-        if (inp == null) { //todo
+        if (inp == null) { //todo file!
             return
         }
         clear()
         resize(inp.getSize())
         for (i in 0..<(inp.getSize() / 3)) {
-            add(inp.getData()[i * 3].toFloat(), inp.getData()[i * 3 + 1].toFloat(), inp.getData()[i * 3 + 2].toFloat()) //todo
+            add(inp.getData()[i * 3].toFloat(), inp.getData()[i * 3 + 1].toFloat(), inp.getData()[i * 3 + 2].toFloat())
         }
     }
 }
