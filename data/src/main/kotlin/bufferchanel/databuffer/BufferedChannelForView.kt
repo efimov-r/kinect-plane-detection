@@ -9,7 +9,7 @@ import viewdata.elementlist.elements.Triangle
 class BufferedChannelForView(val id: Int,
                              cubeSize: Int = 100,
                              lineSize: Int = 100,
-                             pointSize: Int = 100,
+                             pointSize: Int = 600_000, //todo &?
                              triangleSize: Int = 100) : DataForBufferedChannel {
 
     val cubeData: ElementList<Cube> =

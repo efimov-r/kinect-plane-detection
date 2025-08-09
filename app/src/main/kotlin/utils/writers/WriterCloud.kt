@@ -22,9 +22,9 @@ object WriterCloud {
         vectors.forEach { v3->
             toView.add {
                 it.color = if(isThisNeighbours(v3.neighbours, v!!)) 0f else 1f
-                it.y = v3.y.toFloat() / AppConstants.MAX_MM_ON_V3D
-                it.x = v3.x.toFloat() / AppConstants.MAX_MM_ON_V3D
-                it.z = v3.z.toFloat() / AppConstants.MAX_MM_ON_V3D
+                it.y = v3.y / AppConstants.MAX_MM_ON_V3D
+                it.x = v3.x / AppConstants.MAX_MM_ON_V3D
+                it.z = v3.z / AppConstants.MAX_MM_ON_V3D
             }
         }
     }
@@ -32,17 +32,17 @@ object WriterCloud {
     fun writeCubeWithChild(vector: Vector3Childed, toView: ElementList<Cube>) {
         toView.add {
             it.color = 0f
-            it.y = vector.y.toFloat() / AppConstants.MAX_MM_ON_V3D
-            it.x = vector.x.toFloat() / AppConstants.MAX_MM_ON_V3D
-            it.z = vector.z.toFloat() / AppConstants.MAX_MM_ON_V3D
+            it.y = vector.y / AppConstants.MAX_MM_ON_V3D
+            it.x = vector.x / AppConstants.MAX_MM_ON_V3D
+            it.z = vector.z / AppConstants.MAX_MM_ON_V3D
         }
 
         vector.neighbours.forEach { vector ->
             toView.add {
                 it.color = 1f
-                it.y = vector.y.toFloat() / AppConstants.MAX_MM_ON_V3D
-                it.x = vector.x.toFloat() / AppConstants.MAX_MM_ON_V3D
-                it.z = vector.z.toFloat() / AppConstants.MAX_MM_ON_V3D
+                it.y = vector.y / AppConstants.MAX_MM_ON_V3D
+                it.x = vector.x / AppConstants.MAX_MM_ON_V3D
+                it.z = vector.z / AppConstants.MAX_MM_ON_V3D
             }
         }
     }
@@ -58,18 +58,18 @@ object WriterCloud {
     fun writePoint(cloud: Cloud, toView: ElementList<Point>) {
         cloud.forEach { x, y, z ->
             toView.add {
-                it.z = z.toFloat()/ AppConstants.MAX_MM_ON_V3D
-                it.x = x.toFloat()/ AppConstants.MAX_MM_ON_V3D
-                it.y = y.toFloat()/ AppConstants.MAX_MM_ON_V3D
+                it.z = z / AppConstants.MAX_MM_ON_V3D
+                it.x = x / AppConstants.MAX_MM_ON_V3D
+                it.y = y / AppConstants.MAX_MM_ON_V3D
             }
         }
     }
 
     fun viewNullVector(v3: Vector3Float, toView: ElementList<Line>, color: Float) {
             toView.add {
-                it.v1.y = v3.y.toFloat() / AppConstants.MAX_MM_ON_V3D
-                it.v1.x = v3.x.toFloat() / AppConstants.MAX_MM_ON_V3D
-                it.v1.z = v3.z.toFloat() / AppConstants.MAX_MM_ON_V3D
+                it.v1.y = v3.y / AppConstants.MAX_MM_ON_V3D
+                it.v1.x = v3.x / AppConstants.MAX_MM_ON_V3D
+                it.v1.z = v3.z / AppConstants.MAX_MM_ON_V3D
                 it.v1.color = color
 
                 it.v2.y = 0f / AppConstants.MAX_MM_ON_V3D
@@ -82,14 +82,14 @@ object WriterCloud {
     fun viewPerpendicular(v3: Vector3Childed, toView: ElementList<Line>) {
         v3.vecs.forEach { pv ->
             toView.add {
-                it.v1.y = v3.y.toFloat() / AppConstants.MAX_MM_ON_V3D
-                it.v1.x = v3.x.toFloat() / AppConstants.MAX_MM_ON_V3D
-                it.v1.z = v3.z.toFloat() / AppConstants.MAX_MM_ON_V3D
+                it.v1.y = v3.y / AppConstants.MAX_MM_ON_V3D
+                it.v1.x = v3.x / AppConstants.MAX_MM_ON_V3D
+                it.v1.z = v3.z / AppConstants.MAX_MM_ON_V3D
                 it.v1.color = 1f
 
-                it.v2.y = (v3.y + pv.y).toFloat() / AppConstants.MAX_MM_ON_V3D
-                it.v2.x = (v3.x + pv.x).toFloat() / AppConstants.MAX_MM_ON_V3D
-                it.v2.z = (v3.z + pv.z).toFloat() / AppConstants.MAX_MM_ON_V3D
+                it.v2.y = (v3.y + pv.y) / AppConstants.MAX_MM_ON_V3D
+                it.v2.x = (v3.x + pv.x) / AppConstants.MAX_MM_ON_V3D
+                it.v2.z = (v3.z + pv.z) / AppConstants.MAX_MM_ON_V3D
                 it.v2.color = 1f
             }
         }
@@ -99,13 +99,13 @@ object WriterCloud {
         for (v2 in cloud) {
             toView.add {
                 it.v1.y = 2f
-                it.v1.x = v2.x.toFloat() / AppConstants.MAX_MM_ON_V3D
-                it.v1.z = v2.z.toFloat() / AppConstants.MAX_MM_ON_V3D
+                it.v1.x = v2.x / AppConstants.MAX_MM_ON_V3D
+                it.v1.z = v2.z / AppConstants.MAX_MM_ON_V3D
                 it.v1.color = 1f
 
                 it.v2.y = -6f
-                it.v2.x = v2.x.toFloat() / AppConstants.MAX_MM_ON_V3D
-                it.v2.z = v2.z.toFloat() / AppConstants.MAX_MM_ON_V3D
+                it.v2.x = v2.x / AppConstants.MAX_MM_ON_V3D
+                it.v2.z = v2.z / AppConstants.MAX_MM_ON_V3D
                 it.v2.color = 1f
             }
         }
@@ -114,13 +114,13 @@ object WriterCloud {
     fun viewVerticalVector(v: V2Vertical, toView: ElementList<Line>) {
         toView.add {
             it.v1.y = 2f
-            it.v1.x = v.x.toFloat() / AppConstants.MAX_MM_ON_V3D
-            it.v1.z = v.z.toFloat() / AppConstants.MAX_MM_ON_V3D
+            it.v1.x = v.x / AppConstants.MAX_MM_ON_V3D
+            it.v1.z = v.z / AppConstants.MAX_MM_ON_V3D
             it.v1.color = 1f
 
             it.v2.y = -6f
-            it.v2.x = v.x.toFloat() / AppConstants.MAX_MM_ON_V3D
-            it.v2.z = v.z.toFloat() / AppConstants.MAX_MM_ON_V3D
+            it.v2.x = v.x / AppConstants.MAX_MM_ON_V3D
+            it.v2.z = v.z / AppConstants.MAX_MM_ON_V3D
             it.v2.color = 1f
         }
     }

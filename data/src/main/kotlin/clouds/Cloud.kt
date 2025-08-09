@@ -4,10 +4,10 @@ import serialize.ShortArraySerialize
 import kotlin.concurrent.thread
 
 open class Cloud(initialCapacity: Int = 1000, name: String = ""){
-    private var xArray = FloatArray(initialCapacity)
-    private var yArray = FloatArray(initialCapacity)
-    private var zArray = FloatArray(initialCapacity)
-    private var sizeI = 0
+    protected var xArray = FloatArray(initialCapacity)
+    protected var yArray = FloatArray(initialCapacity)
+    protected var zArray = FloatArray(initialCapacity)
+    protected var sizeI = 0
     val size: Int
         get() {
             return sizeI
@@ -25,7 +25,7 @@ open class Cloud(initialCapacity: Int = 1000, name: String = ""){
         sizeI++
     }
 
-    private fun resize(newCapacity: Int) {
+    protected fun resize(newCapacity: Int) {
         xArray = xArray.copyOf(newCapacity)
         yArray = yArray.copyOf(newCapacity)
         zArray = zArray.copyOf(newCapacity)

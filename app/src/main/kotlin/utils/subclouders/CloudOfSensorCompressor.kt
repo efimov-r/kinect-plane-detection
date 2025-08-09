@@ -1,8 +1,12 @@
 package era.app.utils.subclouders
 
+
 import bufferchanel.databuffer.BufferedCloudOfSensor
-import clouds.Cloud
 import clouds.CloudI
+import era.utils.files.KiLogger
+import era.utils.time.Span
+import kotlinx.coroutines.*
+import kotlin.math.min
 
 object CloudOfSensorCompressor {
 //    fun compressHexadruple(inp: BufferedCloudOfSensor) : Cloud{
@@ -113,55 +117,70 @@ object CloudOfSensorCompressor {
 //    }
 
     //берет точку одну из 2*2 из центра поля 16*16, ненулевую если она есть в поле 2*2
-    fun compressHexadrupleRare(inp: BufferedCloudOfSensor) : CloudI {
-        val res = CloudI(inp.size()/16, "cloud/16")
+    suspend fun compressHexadrupleRare(inp: BufferedCloudOfSensor) : CloudI {
+        val outSize = inp.size() / 16
+        val res = CloudI(outSize, "cloud/16")
         if(!inp.validate()) {
             return res
         }
 
+        val chunk = 1000
+        coroutineScope {
+            val jobs = mutableListOf<Deferred<CloudI>>()
+            for (start in 0 until outSize step chunk) {
+                val end = min(start + chunk, outSize)
+                jobs += async(Dispatchers.Default) {
+                    return@async do16(inp, start, end)
+                }
+            }
+
+            for (cloud in jobs.awaitAll()) {
+                res.addCloud(cloud)
+            }
+        }
+
+        return res
+    }
+
+    private fun do16(inp: BufferedCloudOfSensor, at: Int, to: Int): CloudI {
+        val res = CloudI(inp.size() / 16, "cloud/16")
         val gg = inp.width/4
         var v : Float
         var x : Int
         var y : Int
-        for(i in 0..<inp.size()/16) {
+        var c: Int
+        for(i in at until to) {
             x = (i % gg)*4 + 1
             y = (i / gg)*4 + 1
 
-
-            v = inp.getZ(y*inp.width+x) //inline fun
+            c = y*inp.width+x
+            v = inp.getZ(c)
             if(v!=0f) {
-                res.add(inp.getX(y*inp.width+x), inp.getY (y*inp.width+x), v)
+                res.add(inp.getX(c), inp.getY (c), v)
                 continue
             }
 
-            y++
-            v = inp.getZ(y*inp.width+x)
+            c += inp.width //y++
+            v = inp.getZ(c)
             if(v!=0f) {
-                res.add(inp.getX(y*inp.width+x), inp.getY (y*inp.width+x), v)
+                res.add(inp.getX(c), inp.getY (c), v)
                 continue
             }
 
-            x++
-            y--
-            v = inp.getZ(y*inp.width+x)
+            c = c - inp.width + 1 // y-- x++
+            v = inp.getZ(c)
             if(v!=0f) {
-                res.add(inp.getX(y*inp.width+x), inp.getY (y*inp.width+x), v)
+                res.add(inp.getX(c), inp.getY (c), v)
                 continue
             }
 
-            y++
-            v = inp.getZ(y*inp.width+x)
+            c += inp.width //y++
+            v = inp.getZ(c)
             if(v!=0f) {
-                res.add(inp.getX(y*inp.width+x), inp.getY (y*inp.width+x), v)
+                res.add(inp.getX(c), inp.getY (c), v)
                 continue
             }
         }
         return res
     }
-
-    //x, y - положение в поле 640*480
-//    private fun getGlobComponent(inp: BufferedCloudOfSensor, x: Int, y: Int, comp: Int) : Short {
-//        return inp.get( (y*inp.width+x) * 3 + comp)
-//    }
-
 }

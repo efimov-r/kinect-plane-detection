@@ -73,13 +73,13 @@ object V3dUtils {
     fun perspective(
         fovy: Float, aspect: Float, zNear: Float, zFar: Float
     ): FloatArray? {
-        val radians = Math.toRadians((fovy / 2).toDouble()).toFloat()
+        val radians = Math.toRadians((fovy / 2).toDouble())
         val deltaZ = zFar - zNear
-        val sine = sin(radians.toDouble()).toFloat()
-        if ((deltaZ == 0f) || (sine == 0f) || (aspect == 0f)) {
+        val sine = sin(radians)
+        if ((deltaZ == 0f) || (sine == 0.0) || (aspect == 0f)) {
             return identity()
         }
-        val cotangent = cos(radians.toDouble()).toFloat() / sine
+        val cotangent = (cos(radians) / sine).toFloat()
         val m = identity()
         m!![0 * 4 + 0] = cotangent / aspect
         m[1 * 4 + 1] = cotangent
@@ -164,9 +164,9 @@ object V3dUtils {
      */
     fun rotationX(angleDeg: Float): FloatArray? {
         val m = identity()
-        val angleRad = Math.toRadians(angleDeg.toDouble()).toFloat()
-        val ca = cos(angleRad.toDouble()).toFloat()
-        val sa = sin(angleRad.toDouble()).toFloat()
+        val angleRad = Math.toRadians(angleDeg.toDouble())
+        val ca = cos(angleRad).toFloat()
+        val sa = sin(angleRad).toFloat()
         m!![5] = ca
         m[6] = sa
         m[9] = -sa
@@ -182,9 +182,9 @@ object V3dUtils {
      */
     fun rotationY(angleDeg: Float): FloatArray? {
         val m = identity()
-        val angleRad = Math.toRadians(angleDeg.toDouble()).toFloat()
-        val ca = cos(angleRad.toDouble()).toFloat()
-        val sa = sin(angleRad.toDouble()).toFloat()
+        val angleRad = Math.toRadians(angleDeg.toDouble())
+        val ca = cos(angleRad).toFloat()
+        val sa = sin(angleRad).toFloat()
         m!![0] = ca
         m[2] = -sa
         m[8] = sa

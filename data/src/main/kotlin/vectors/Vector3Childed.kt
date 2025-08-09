@@ -113,4 +113,8 @@ class Vector3Childed(x: Float,
 
         return (x == other.x) && (y == other.y) && (z == other.z)
     }
+
+    override fun hashCode(): Int {
+        return javaClass.hashCode()
+    }
 }

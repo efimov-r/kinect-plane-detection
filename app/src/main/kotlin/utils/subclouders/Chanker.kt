@@ -17,14 +17,12 @@ object Chanker {
 
     //возвращает центральные точки чанков
     suspend fun CoroutineScope.chancked5(fastCloud: CloudI, halfSize: Short): MutableList<Vector3Childed> {
-        span.resetTimer()
         val minX = (fastCloud.minX() ?: return mutableListOf()).toInt()
         val maxX = (fastCloud.maxX() ?: return mutableListOf()).toInt()
         val minZ = (fastCloud.minZ() ?: return mutableListOf()).toInt()
         val maxZ = (fastCloud.maxZ() ?: return mutableListOf()).toInt()
         val minY = (fastCloud.minY() ?: return mutableListOf()).toInt()
         val maxY = (fastCloud.maxY() ?: return mutableListOf()).toInt()
-        span.middleCircle(100, "minmax")
 
         if ((maxX - minX) < AppConstants.MIN_SIZE_CREATE_VERTICAL_VECTORS ||
             (maxZ - minZ) < AppConstants.MIN_SIZE_CREATE_VERTICAL_VECTORS) return mutableListOf()

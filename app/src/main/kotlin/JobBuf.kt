@@ -37,7 +37,7 @@ class JobBuf {
                     toViewChannel.getDataForWriteOrRewriteOld()?.let { writeCloud ->
                         span.resetTimer()
 
-                        span3.resetTimer()
+
                         writeCloud.cubeData.clear()
                         writeCloud.lineData.clear()
                         writeCloud.pointData.clear()
@@ -49,15 +49,17 @@ class JobBuf {
 //                                "Z:      ${readCloud.minZ()}    ${readCloud.maxZ()}"
 //                        channelText.send(ToViewText(text))
 
-                        span3.middleCircle(100, "custom")
+
 
                         val fastCloud = CloudOfSensorCompressor.compressHexadrupleRare(readCloud)
 
 
                         val vectorP = doJobCube(fastCloud, writeCloud).await()
+
                         if(vectorP == null) {
                             WriterCloud.writePoint(readCloud, writeCloud.pointData)
                         } else {
+
                             WriterCloud.viewNullVector(vectorP, writeCloud.lineData, 0f)
 
 
@@ -65,17 +67,19 @@ class JobBuf {
                             val newP = rotateVector(vectorP, matrix)
                             WriterCloud.viewNullVector(newP, writeCloud.lineData, 1f)
 
+
                             val res = Cloud(readCloud.size(), "cloudR")
-                            span2.resetTimer()
+//                            span2.resetTimer()
                             readCloud.forEach { x, y, z ->
                                 res.add(
                                     (matrix[0][0] * x + matrix[0][1] * y + matrix[0][2] * z).toFloat(),
                                     (matrix[1][0] * x + matrix[1][1] * y + matrix[1][2] * z).toFloat(),
                                     (matrix[2][0] * x + matrix[2][1] * y + matrix[2][2] * z).toFloat())
                             }
-                            span2.middleCircle(100, "rotate")
+//                            span2.middleCircle(100, "rotate")
+                            span3.resetTimer()
                             WriterCloud.writePoint(res, writeCloud.pointData)
-
+                            span3.middleCircle(100, "wiew point")
 
                         }
                         span.middleCircle(100, "All")

@@ -8,25 +8,21 @@ INF: 08.Aug.2025 00:18:39: rotate 17.04
 INF: 08.Aug.2025 00:18:39: All 35.02
 
 
-без индексации
-INF: 08.Aug.2025 13:57:44: All 21.58
-INF: 08.Aug.2025 13:57:46: custom 0.00
-INF: 08.Aug.2025 13:57:46: minmax 0.32
-INF: 08.Aug.2025 13:57:46: rotate 8.28
-INF: 08.Aug.2025 13:57:46: All 19.71
-INF: 08.Aug.2025 13:57:48: custom 0.00
-INF: 08.Aug.2025 13:57:48: minmax 0.24
-INF: 08.Aug.2025 13:57:48: rotate 8.15
-INF: 08.Aug.2025 13:57:48: All 19.73
-INF: 08.Aug.2025 13:57:50: custom 0.00
-INF: 08.Aug.2025 13:57:50: minmax 0.33
-INF: 08.Aug.2025 13:57:50: rotate 6.76
-INF: 08.Aug.2025 13:57:50: All 19.30
-INF: 08.Aug.2025 13:57:52: custom 0.00
-INF: 08.Aug.2025 13:57:52: minmax 0.24
-INF: 08.Aug.2025 13:57:52: rotate 7.99
-INF: 08.Aug.2025 13:57:52: All 18.45
-INF: 08.Aug.2025 13:57:54: custom 0.00
-INF: 08.Aug.2025 13:57:54: minmax 0.38
-INF: 08.Aug.2025 13:57:54: rotate 8.08
-INF: 08.Aug.2025 13:57:54: All 19.40
+c индексации
+INF: 08.Aug.2025 14:20:59: from file mode
+INF: 08.Aug.2025 14:21:01: custom 0.00
+INF: 08.Aug.2025 14:21:01: minmax 0.01
+INF: 08.Aug.2025 14:21:01: rotate 6.97
+INF: 08.Aug.2025 14:21:01: All 20.79
+INF: 08.Aug.2025 14:21:03: custom 0.00
+INF: 08.Aug.2025 14:21:03: minmax 0.01
+INF: 08.Aug.2025 14:21:03: rotate 7.71
+INF: 08.Aug.2025 14:21:03: All 21.76
+INF: 08.Aug.2025 14:21:05: custom 0.00
+INF: 08.Aug.2025 14:21:05: minmax 0.01
+INF: 08.Aug.2025 14:21:05: rotate 7.79
+INF: 08.Aug.2025 14:21:05: All 18.87
+INF: 08.Aug.2025 14:21:07: custom 0.00
+INF: 08.Aug.2025 14:21:07: minmax 0.01
+INF: 08.Aug.2025 14:21:07: rotate 8.46
+INF: 08.Aug.2025 14:21:07: All 19.98
