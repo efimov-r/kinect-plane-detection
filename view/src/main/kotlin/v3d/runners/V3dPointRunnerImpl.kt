@@ -9,19 +9,11 @@ class V3dPointRunnerImpl : V3dRunner {
     }
 
     override fun getBuffSize(data: BufferedChannelForView): Int {
-        return data.pointData.size()
+        return data.pointData.bufRealSize/4
     }
 
     override fun setVertexBuffer(buffer: FloatBuffer, data: BufferedChannelForView): Int {
-        var countVertex = 0
-        data.pointData.forEach { glob, i ->
-            buffer.put(4 * i, glob.z)
-            buffer.put(4 * i + 1, glob.x)
-            buffer.put(4 * i + 2, glob.y)
-            buffer.put(4 * i + 3, glob.color)
-            countVertex++
-        }
-        data.pointData.endRead()
-        return countVertex
+        data.pointData.dataToBuffer(buffer)
+        return (data.pointData.size/4)
     }
 }

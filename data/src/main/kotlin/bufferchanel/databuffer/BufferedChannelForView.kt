@@ -1,5 +1,6 @@
 package bufferchanel.databuffer
 
+import viewdata.buffers.PointBuffer
 import viewdata.elementlist.ElementList
 import viewdata.elementlist.elements.Cube
 import viewdata.elementlist.elements.Line
@@ -18,8 +19,7 @@ class BufferedChannelForView(val id: Int,
     val lineData: ElementList<Line> =
         ElementList(initialCapacity = lineSize) { Line.createEmpty()}
 
-    val pointData: ElementList<Point> =
-        ElementList(initialCapacity = pointSize) { Point.createEmpty()}
+    val pointData: PointBuffer = PointBuffer(pointSize)
 
     val triangleData: ElementList<Triangle> =
         ElementList(initialCapacity = triangleSize) { Triangle.createEmpty()}

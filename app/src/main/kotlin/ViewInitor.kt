@@ -28,7 +28,7 @@ class ViewInitor {
             val creator = GLCapabilitiesCreator()
             val eventListener = V3dGlMultiEventListener(
                 createAllComplects(0.2f),
-                createAllModelComplects(listOf(KinectModel(1f/AppConstants.MAX_MM_ON_V3D))),
+                createAllModelComplects(listOf(KinectModel(AppConstants.AD_MAX_MM_ON_V3D))),
                 channelToView)
             SwingUtilities.invokeLater(object : Runnable {
                 override fun run() {

@@ -1,6 +1,5 @@
 package era.app.utils.writers
 
-import clouds.Cloud
 import era.app.AppConstants
 import vectors.V2Vertical
 import vectors.Vector3Childed
@@ -8,7 +7,6 @@ import vectors.Vector3Float
 import viewdata.elementlist.ElementList
 import viewdata.elementlist.elements.Cube
 import viewdata.elementlist.elements.Line
-import viewdata.elementlist.elements.Point
 
 object WriterCloud {
     fun writeCubes(vectors: MutableList<Vector3Childed>, toView: ElementList<Cube>) {
@@ -22,9 +20,9 @@ object WriterCloud {
         vectors.forEach { v3->
             toView.add {
                 it.color = if(isThisNeighbours(v3.neighbours, v!!)) 0f else 1f
-                it.y = v3.y / AppConstants.MAX_MM_ON_V3D
-                it.x = v3.x / AppConstants.MAX_MM_ON_V3D
-                it.z = v3.z / AppConstants.MAX_MM_ON_V3D
+                it.y = v3.y * AppConstants.AD_MAX_MM_ON_V3D
+                it.x = v3.x * AppConstants.AD_MAX_MM_ON_V3D
+                it.z = v3.z * AppConstants.AD_MAX_MM_ON_V3D
             }
         }
     }
@@ -32,17 +30,17 @@ object WriterCloud {
     fun writeCubeWithChild(vector: Vector3Childed, toView: ElementList<Cube>) {
         toView.add {
             it.color = 0f
-            it.y = vector.y / AppConstants.MAX_MM_ON_V3D
-            it.x = vector.x / AppConstants.MAX_MM_ON_V3D
-            it.z = vector.z / AppConstants.MAX_MM_ON_V3D
+            it.y = vector.y * AppConstants.AD_MAX_MM_ON_V3D
+            it.x = vector.x * AppConstants.AD_MAX_MM_ON_V3D
+            it.z = vector.z * AppConstants.AD_MAX_MM_ON_V3D
         }
 
         vector.neighbours.forEach { vector ->
             toView.add {
                 it.color = 1f
-                it.y = vector.y / AppConstants.MAX_MM_ON_V3D
-                it.x = vector.x / AppConstants.MAX_MM_ON_V3D
-                it.z = vector.z / AppConstants.MAX_MM_ON_V3D
+                it.y = vector.y * AppConstants.AD_MAX_MM_ON_V3D
+                it.x = vector.x * AppConstants.AD_MAX_MM_ON_V3D
+                it.z = vector.z * AppConstants.AD_MAX_MM_ON_V3D
             }
         }
     }
@@ -55,26 +53,27 @@ object WriterCloud {
         return false
     }
 
-    fun writePoint(cloud: Cloud, toView: ElementList<Point>) {
-        cloud.forEach { x, y, z ->
-            toView.add {
-                it.z = z / AppConstants.MAX_MM_ON_V3D
-                it.x = x / AppConstants.MAX_MM_ON_V3D
-                it.y = y / AppConstants.MAX_MM_ON_V3D
-            }
-        }
-    }
+//    fun writePoint(cloud: Cloud, toView: PointBuffer) {
+//        toView.ofCloud(cloud, 0f, AppConstants.AD_MAX_MM_ON_V3D)
+////        cloud.forEach { x, y, z ->
+////            toView.addPoint(
+////                x * AppConstants.AD_MAX_MM_ON_V3D,
+////                y * AppConstants.AD_MAX_MM_ON_V3D,
+////                z * AppConstants.AD_MAX_MM_ON_V3D,
+////                0f)
+////        }
+//    }
 
     fun viewNullVector(v3: Vector3Float, toView: ElementList<Line>, color: Float) {
             toView.add {
-                it.v1.y = v3.y / AppConstants.MAX_MM_ON_V3D
-                it.v1.x = v3.x / AppConstants.MAX_MM_ON_V3D
-                it.v1.z = v3.z / AppConstants.MAX_MM_ON_V3D
+                it.v1.y = v3.y * AppConstants.AD_MAX_MM_ON_V3D
+                it.v1.x = v3.x * AppConstants.AD_MAX_MM_ON_V3D
+                it.v1.z = v3.z * AppConstants.AD_MAX_MM_ON_V3D
                 it.v1.color = color
 
-                it.v2.y = 0f / AppConstants.MAX_MM_ON_V3D
-                it.v2.x = 0f / AppConstants.MAX_MM_ON_V3D
-                it.v2.z = 0f / AppConstants.MAX_MM_ON_V3D
+                it.v2.y = 0f
+                it.v2.x = 0f
+                it.v2.z = 0f
                 it.v2.color = color
             }
     }
@@ -82,14 +81,14 @@ object WriterCloud {
     fun viewPerpendicular(v3: Vector3Childed, toView: ElementList<Line>) {
         v3.vecs.forEach { pv ->
             toView.add {
-                it.v1.y = v3.y / AppConstants.MAX_MM_ON_V3D
-                it.v1.x = v3.x / AppConstants.MAX_MM_ON_V3D
-                it.v1.z = v3.z / AppConstants.MAX_MM_ON_V3D
+                it.v1.y = v3.y * AppConstants.AD_MAX_MM_ON_V3D
+                it.v1.x = v3.x * AppConstants.AD_MAX_MM_ON_V3D
+                it.v1.z = v3.z * AppConstants.AD_MAX_MM_ON_V3D
                 it.v1.color = 1f
 
-                it.v2.y = (v3.y + pv.y) / AppConstants.MAX_MM_ON_V3D
-                it.v2.x = (v3.x + pv.x) / AppConstants.MAX_MM_ON_V3D
-                it.v2.z = (v3.z + pv.z) / AppConstants.MAX_MM_ON_V3D
+                it.v2.y = (v3.y + pv.y) * AppConstants.AD_MAX_MM_ON_V3D
+                it.v2.x = (v3.x + pv.x) * AppConstants.AD_MAX_MM_ON_V3D
+                it.v2.z = (v3.z + pv.z) * AppConstants.AD_MAX_MM_ON_V3D
                 it.v2.color = 1f
             }
         }
@@ -99,13 +98,13 @@ object WriterCloud {
         for (v2 in cloud) {
             toView.add {
                 it.v1.y = 2f
-                it.v1.x = v2.x / AppConstants.MAX_MM_ON_V3D
-                it.v1.z = v2.z / AppConstants.MAX_MM_ON_V3D
+                it.v1.x = v2.x * AppConstants.AD_MAX_MM_ON_V3D
+                it.v1.z = v2.z * AppConstants.AD_MAX_MM_ON_V3D
                 it.v1.color = 1f
 
                 it.v2.y = -6f
-                it.v2.x = v2.x / AppConstants.MAX_MM_ON_V3D
-                it.v2.z = v2.z / AppConstants.MAX_MM_ON_V3D
+                it.v2.x = v2.x * AppConstants.AD_MAX_MM_ON_V3D
+                it.v2.z = v2.z * AppConstants.AD_MAX_MM_ON_V3D
                 it.v2.color = 1f
             }
         }
@@ -114,13 +113,13 @@ object WriterCloud {
     fun viewVerticalVector(v: V2Vertical, toView: ElementList<Line>) {
         toView.add {
             it.v1.y = 2f
-            it.v1.x = v.x / AppConstants.MAX_MM_ON_V3D
-            it.v1.z = v.z / AppConstants.MAX_MM_ON_V3D
+            it.v1.x = v.x * AppConstants.AD_MAX_MM_ON_V3D
+            it.v1.z = v.z * AppConstants.AD_MAX_MM_ON_V3D
             it.v1.color = 1f
 
             it.v2.y = -6f
-            it.v2.x = v.x / AppConstants.MAX_MM_ON_V3D
-            it.v2.z = v.z / AppConstants.MAX_MM_ON_V3D
+            it.v2.x = v.x * AppConstants.AD_MAX_MM_ON_V3D
+            it.v2.z = v.z * AppConstants.AD_MAX_MM_ON_V3D
             it.v2.color = 1f
         }
     }

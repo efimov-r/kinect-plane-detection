@@ -6,6 +6,13 @@ plugins {
     application
 }
 
+tasks.withType<JavaCompile> {
+    options.compilerArgs.addAll(listOf("--add-modules", "jdk.incubator.vector"))
+}
+tasks.withType<JavaExec> {
+    jvmArgs("--add-modules", "jdk.incubator.vector")
+}
+
 dependencies {
     // Project "app" depends on project "utils". (Project paths are separated with ":", so ":utils" refers to the top-level "utils" project.)
     implementation(project(":utils"))

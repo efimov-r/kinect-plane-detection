@@ -118,13 +118,13 @@ object CloudOfSensorCompressor {
 
     //берет точку одну из 2*2 из центра поля 16*16, ненулевую если она есть в поле 2*2
     suspend fun compressHexadrupleRare(inp: BufferedCloudOfSensor) : CloudI {
-        val outSize = inp.size() / 16
+        val outSize = inp.size / 16
         val res = CloudI(outSize, "cloud/16")
         if(!inp.validate()) {
             return res
         }
 
-        val chunk = 1000
+        val chunk = 1000 //todo to thread
         coroutineScope {
             val jobs = mutableListOf<Deferred<CloudI>>()
             for (start in 0 until outSize step chunk) {
@@ -143,7 +143,7 @@ object CloudOfSensorCompressor {
     }
 
     private fun do16(inp: BufferedCloudOfSensor, at: Int, to: Int): CloudI {
-        val res = CloudI(inp.size() / 16, "cloud/16")
+        val res = CloudI(inp.size / 16, "cloud/16")
         val gg = inp.width/4
         var v : Float
         var x : Int

@@ -1,7 +1,7 @@
 package era.app
 
 object AppConstants {
-    const val MAX_MM_ON_V3D: Int = 700
+    const val AD_MAX_MM_ON_V3D = 0.0014286f
     const val MIN_SIZE_CREATE_VERTICAL_VECTORS: Short = 800
     const val STEP_CREATE_VERTICAL_VECTORS: Int = 300
     const val NEIGHBOURS_MIN_COUNT: Int = 4

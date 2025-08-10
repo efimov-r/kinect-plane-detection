@@ -10,6 +10,7 @@ import era.app.utils.neighbour.NeighbourHelper
 import era.app.utils.subclouders.Chanker.chancked5
 import era.app.utils.subclouders.CloudOfSensorCompressor
 import era.app.utils.writers.WriterCloud
+import era.utils.files.KiLogger
 import era.utils.time.Span
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -49,39 +50,33 @@ class JobBuf {
 //                                "Z:      ${readCloud.minZ()}    ${readCloud.maxZ()}"
 //                        channelText.send(ToViewText(text))
 
-
-
                         val fastCloud = CloudOfSensorCompressor.compressHexadrupleRare(readCloud)
 
+//                        var i = 0
+//                        readCloud.forEach { x, y, z ->
+//                            if(z == 0f) {
+//                                i++
+//                            }
+//                        }
+//                        KiLogger.inf(i.toString())
+//                        KiLogger.inf(readCloud.size.toString())
 
                         val vectorP = doJobCube(fastCloud, writeCloud).await()
 
-                        if(vectorP == null) {
-                            WriterCloud.writePoint(readCloud, writeCloud.pointData)
-                        } else {
-
+                        if(vectorP != null) {
                             WriterCloud.viewNullVector(vectorP, writeCloud.lineData, 0f)
-
 
                             val matrix = rotationMatrixToY(Vector3Float(vectorP.x, vectorP.y, vectorP.z))
                             val newP = rotateVector(vectorP, matrix)
                             WriterCloud.viewNullVector(newP, writeCloud.lineData, 1f)
 
-
-                            val res = Cloud(readCloud.size(), "cloudR")
 //                            span2.resetTimer()
-                            readCloud.forEach { x, y, z ->
-                                res.add(
-                                    (matrix[0][0] * x + matrix[0][1] * y + matrix[0][2] * z).toFloat(),
-                                    (matrix[1][0] * x + matrix[1][1] * y + matrix[1][2] * z).toFloat(),
-                                    (matrix[2][0] * x + matrix[2][1] * y + matrix[2][2] * z).toFloat())
-                            }
+                            readCloud.transformSIMD(matrix, 10)
 //                            span2.middleCircle(100, "rotate")
-                            span3.resetTimer()
-                            WriterCloud.writePoint(res, writeCloud.pointData)
-                            span3.middleCircle(100, "wiew point")
-
                         }
+//                            span3.resetTimer()
+                        writeCloud.pointData.ofCloud(readCloud, 0f, AppConstants.AD_MAX_MM_ON_V3D, 10)
+//                            span3.middleCircle(100, "wiew point")
                         span.middleCircle(100, "All")
 
                         toViewChannel.endWrite(writeCloud)
@@ -112,40 +107,16 @@ class JobBuf {
 
             val vectorP = groupPerpendicularVectors(v3List)
             return@async vectorP
-//            if(vectorP == null) {
-//                WriterCloud.writePoint(fastCloud, writeCloud.pointData)
-//            } else {
-//                WriterCloud.viewNullVector(vectorP, writeCloud.lineData, 0f)
-//
-//
-//                val matrix = rotationMatrixToY(Vector3Double(vectorP.x.toDouble(), vectorP.y.toDouble(), vectorP.z.toDouble()))
-//                val newP = rotateVector(vectorP, matrix)
-//                WriterCloud.viewNullVector(newP, writeCloud.lineData, 1f)
-//
-//                val res = CloudJ(fastCloud.size(), "cloudR")
-//                span2.resetTimer()
-//                fastCloud.forEach { x, y, z ->
-//                    res.addGlob(
-//                        (matrix[0][0] * x + matrix[0][1] * y + matrix[0][2] * z).toInt().toShort(),
-//                        (matrix[1][0] * x + matrix[1][1] * y + matrix[1][2] * z).toInt().toShort(),
-//                        (matrix[2][0] * x + matrix[2][1] * y + matrix[2][2] * z).toInt().toShort()
-//                    )
-//                }
-//                span2.middleCircle(100, "rotate")
-//                WriterCloud.writePoint(res, writeCloud.pointData)
-//
-//
-//            }
         }
 
-        fun rotateVector(v: Vector3Float, matrix: Array<DoubleArray>): Vector3Float {
+        fun rotateVector(v: Vector3Float, matrix: Array<FloatArray>): Vector3Float {
             val x = matrix[0][0] * v.x + matrix[0][1] * v.y + matrix[0][2] * v.z
             val y = matrix[1][0] * v.x + matrix[1][1] * v.y + matrix[1][2] * v.z
             val z = matrix[2][0] * v.x + matrix[2][1] * v.y + matrix[2][2] * v.z
             return Vector3Float(x.toFloat(), y.toFloat(), z.toFloat())
         }
 
-        fun rotationMatrixToY(v: Vector3Float): Array<DoubleArray> {
+        fun rotationMatrixToY(v: Vector3Float): Array<FloatArray> {
             val from = v.normalize()
             val to = Vector3Float(0f, -1f, 0f)
 
@@ -164,16 +135,16 @@ class JobBuf {
             val t = 1 - c
 
             return arrayOf(
-                doubleArrayOf(t*x*x + c,     t*x*y - z*s,   t*x*z + y*s),
-                doubleArrayOf(t*y*x + z*s,   t*y*y + c,     t*y*z - x*s),
-                doubleArrayOf(t*z*x - y*s,   t*z*y + x*s,   t*z*z + c)
+                floatArrayOf((t*x*x + c).toFloat(),     (t*x*y - z*s).toFloat(),   (t*x*z + y*s).toFloat()),
+                floatArrayOf((t*y*x + z*s).toFloat(),   (t*y*y + c).toFloat(),     (t*y*z - x*s).toFloat()),
+                floatArrayOf((t*z*x - y*s).toFloat(),   (t*z*y + x*s).toFloat(),   (t*z*z + c).toFloat())
             )
         }
 
-        fun identityMatrix(): Array<DoubleArray> = arrayOf(
-            doubleArrayOf(1.0, 0.0, 0.0),
-            doubleArrayOf(0.0, 1.0, 0.0),
-            doubleArrayOf(0.0, 0.0, 1.0)
+        fun identityMatrix(): Array<FloatArray> = arrayOf(
+            floatArrayOf(1f, 0f, 0f),
+            floatArrayOf(0f, 1f, 0f),
+            floatArrayOf(0f, 0f, 1f)
         )
 
         private fun groupPerpendicularVectors(v3List: MutableList<Vector3Childed>): Vector3Float? {

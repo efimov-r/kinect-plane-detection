@@ -14,7 +14,7 @@ class BufferedCloudOfSensor(initialCapacity: Int = 10,
     }
 
     override fun validate(): Boolean {
-        return width*height == size()
+        return width*height == size
     }
 
     fun asRow(): RowCloudData {
