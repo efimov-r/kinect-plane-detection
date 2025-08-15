@@ -34,7 +34,7 @@ class VBOModelImpl(private val model: V3dModel) : VBOModel {
 
         // Initialize the vertex buffer object
         gl.glBindBuffer(GL.GL_ARRAY_BUFFER, vertexBufferObject)
-        gl.glBufferData(GL.GL_ARRAY_BUFFER, (model.getSizeBuf().toLong()) * 4 * Sizeof.cl_float, null, GL.GL_STATIC_DRAW)
+        gl.glBufferData(GL.GL_ARRAY_BUFFER, (model.getSizeBuf().toLong()) * Sizeof.cl_float, null, GL.GL_STATIC_DRAW)
 
         val byteBuffer = gl.glMapBuffer(GL.GL_ARRAY_BUFFER, GL.GL_WRITE_ONLY)
         val asFloatBuffer = byteBuffer.order(ByteOrder.nativeOrder()).asFloatBuffer()

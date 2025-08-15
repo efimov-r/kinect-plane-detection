@@ -186,7 +186,7 @@ class KinectModel(private val multi: Float) : V3dModel {
         private const val COLOR_2 = 1f
         private const val COLOR_3 = 0f
 
-        const val sizeBuf: Int = 192
+        const val sizeBuf: Int = 192 * 12
     }
 
     class Vertex(var x: Float, var y: Float, var z: Float)

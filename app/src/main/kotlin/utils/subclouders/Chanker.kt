@@ -1,22 +1,21 @@
 package era.app.utils.subclouders
 
 import clouds.Cloud
-import clouds.CloudI
 import era.app.AppConstants
 import era.utils.time.Span
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import vectors.Vector3
 import vectors.Vector3Childed
+import vectors.Vector3Float
 
 object Chanker {
 
     val span = Span()
 
     //возвращает центральные точки чанков
-    suspend fun CoroutineScope.chancked5(fastCloud: CloudI, halfSize: Short): MutableList<Vector3Childed> {
+    suspend fun CoroutineScope.chancked5(fastCloud: Cloud, halfSize: Short): MutableList<Vector3Childed> {
         val minX = (fastCloud.minX() ?: return mutableListOf()).toInt()
         val maxX = (fastCloud.maxX() ?: return mutableListOf()).toInt()
         val minZ = (fastCloud.minZ() ?: return mutableListOf()).toInt()
@@ -31,7 +30,7 @@ object Chanker {
             async(Dispatchers.Default) {
                 val xMin = curX - halfSize
                 val xMax = curX + halfSize
-                val polosas = Cloud(300, "polosa cloud, $curX")
+                val polosas = Cloud(3000, "polosa cloud, $curX")
                 fastCloud.forEach{x, y, z ->
                     if (x in xMin.toFloat()..xMax.toFloat()) {
                         polosas.add(x, y, z)
@@ -42,7 +41,7 @@ object Chanker {
                     async(Dispatchers.Default) {
                         val zMin = curZ - halfSize
                         val zMax = curZ + halfSize
-                        val chank = Cloud(300, "Stolb cloud, $curX $curZ")
+                        val chank = Cloud(3000, "Stolb cloud, $curX $curZ")
 
                         polosas.forEach{ x, y, z ->
                             if (z in zMin.toFloat()..zMax.toFloat()) {
@@ -52,14 +51,14 @@ object Chanker {
 
                         var minLength = Int.MAX_VALUE
                         var length: Int
-                        var result:Vector3<Float>? = null
+                        var result: Vector3Float? = null
 
                         val srY = maxY - minY
                         chank.forEach{x, y, z ->
                             length = (((x-curX)*(x-curX)) + ((y-srY) * (y-srY)) + ((z-curZ) * (z-curZ))).toInt()
                             if(length < minLength) {
                                 minLength = length
-                                result = Vector3(x, y, z)
+                                result = Vector3Float(x, y, z)
                             }
                         }
 

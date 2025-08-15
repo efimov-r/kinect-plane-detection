@@ -10,7 +10,7 @@ open class ViewBuffer (initialCapacity: Int) {
         get() {
             return sizeI
         }
-    val bufRealSize: Int
+    val arraySize: Int
         get() {
             return data.size
         }
@@ -33,5 +33,11 @@ open class ViewBuffer (initialCapacity: Int) {
     fun dataToBuffer(buffer: FloatBuffer) {
         buffer.put(data)
         isUpdated = false
+    }
+
+    //inline ахренеть как влияет на производительность
+    protected inline fun addDat(dataIn: Float) {
+        data[sizeI] = dataIn
+        sizeI++
     }
 }

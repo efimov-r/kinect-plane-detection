@@ -32,6 +32,7 @@ class DepthHandlerImpl(val channel: BufferedChannel<BufferedCloudOfSensor>) : De
                     val y = ToCloud.getInstance().calcYFast(mmRes, i / KINECT_DEPTH_COLS)
                     it.add(x.toFloat(), y.toFloat(), mmRes.toFloat())
                 }
+                it.minMaxDo()
                 channel.endWrite(it)
             }
         }

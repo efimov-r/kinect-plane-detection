@@ -14,7 +14,7 @@ class PointBuffer(initialCapacity: Int = 10) : ViewBuffer(initialCapacity) {
     suspend fun ofCloud(cloud: Cloud, color: Float, multFor3D: Float, countOfThread: Int) = coroutineScope {
         clear()
 
-        if (bufRealSize < cloud.size * 4) {
+        if (arraySize < cloud.size * 4) {
             resize(cloud.size * 4)
         }
 
@@ -50,49 +50,41 @@ class PointBuffer(initialCapacity: Int = 10) : ViewBuffer(initialCapacity) {
 
     fun ofCloud(cloud: Cloud, color: Float, multFor3D: Float) {
         clear()
-        if(bufRealSize < (cloud.size*4)) {
+        if(arraySize < (cloud.size*4)) {
             resize(cloud.size*4)
         }
         for(i in 0 until cloud.size) {
-            data[sizeI] = cloud.getZ(i) * multFor3D
-            sizeI++
-            data[sizeI] = cloud.getX(i) * multFor3D
-            sizeI++
-            data[sizeI] = cloud.getY(i) * multFor3D
-            sizeI++
-            data[sizeI] = color
-            sizeI++
+            addDat(cloud.getZ(i) * multFor3D)
+            addDat(cloud.getX(i) * multFor3D)
+            addDat(cloud.getY(i) * multFor3D)
+            addDat(color)
         }
         updated()
     }
 
-    fun addPoint(x: Float, y: Float, z: Float, color: Float) {
-        if ((sizeI + 4) > data.size) {
-            resize(max(sizeI * 2, sizeI+4))
-        }
-        data[sizeI] = z
-        sizeI++
-        data[sizeI] = x
-        sizeI++
-        data[sizeI] = y
-        sizeI++
-        data[sizeI] = color
-        sizeI++
+    fun addPointOn3DKord(x: Float, y: Float, z: Float, color: Float) {
+        resizeForPoint(1)
+
+        addDat(z)
+        addDat(x)
+        addDat(y)
+        addDat(color)
         updated()
     }
 
     fun addPoint(x: Float, y: Float, z: Float, color: Float, multFor3D: Float) {
-        if ((sizeI + 4) > data.size) {
-            resize(max(sizeI * 2, sizeI+4))
-        }
-        data[sizeI] = z * multFor3D
-        sizeI++
-        data[sizeI] = x * multFor3D
-        sizeI++
-        data[sizeI] = y * multFor3D
-        sizeI++
-        data[sizeI] = color
-        sizeI++
+        resizeForPoint(1)
+
+        addDat(z * multFor3D)
+        addDat(x * multFor3D)
+        addDat(y * multFor3D)
+        addDat(color)
         updated()
+    }
+
+    private fun resizeForPoint(count: Int) {
+        if ((sizeI + (4*count)) > data.size) {
+            resize(max(sizeI * 2, sizeI+(4*count)))
+        }
     }
 }

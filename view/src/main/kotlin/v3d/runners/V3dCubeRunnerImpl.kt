@@ -9,19 +9,11 @@ class V3dCubeRunnerImpl : V3dRunner {
     }
 
     override fun getBuffSize(data: BufferedChannelForView): Int {
-        return data.cubeData.size()
+        return data.cubeData.arraySize
     }
 
     override fun setVertexBuffer(buffer: FloatBuffer, data: BufferedChannelForView): Int {
-        var countVertex = 0
-        data.cubeData.forEach { glob, i ->
-            buffer.put(4 * i, glob.z)
-            buffer.put(4 * i + 1, glob.x)
-            buffer.put(4 * i + 2, glob.y)
-            buffer.put(4 * i + 3, glob.color)
-            countVertex++
-        }
-        data.cubeData.endRead()
-        return countVertex
+        data.cubeData.dataToBuffer(buffer)
+        return data.cubeData.size/4
     }
 }

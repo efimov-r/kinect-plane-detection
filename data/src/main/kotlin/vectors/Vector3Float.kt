@@ -2,7 +2,7 @@ package vectors
 
 import kotlin.math.sqrt
 
-open class Vector3Float(x: Float, y: Float, z: Float) : Vector3<Float>(x, y, z) {
+open class Vector3Float(var x: Float, var y: Float, var z: Float) {
     infix fun plus(other: Vector3Float) = Vector3Float(
         x + other.x,
         y + other.y,
@@ -39,6 +39,6 @@ open class Vector3Float(x: Float, y: Float, z: Float) : Vector3<Float>(x, y, z) 
     fun dot(other: Vector3Float): Double = (x * other.x + y * other.y + z * other.z).toDouble()
 
     override fun toString(): String {
-        return "x: $x, y: $y, z: $z"
+        return "Vector3(x=$x, y=$y, z=$z)"
     }
 }

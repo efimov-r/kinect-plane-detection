@@ -5,12 +5,22 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
+import java.io.Serializable
 
-class KiSerializer<T: ISerializedData>(val filename: String) {
+class KiSerializer<T: Serializable>(val filename: String) {
     fun writeObject(obj: T) {
         try {
+            KiLogger.inf(filename)
             ObjectOutputStream(FileOutputStream(filename)).use {
                 it.writeObject(obj)
+            }
+        } catch (ex: Exception) {
+            KiLogger.err(ex)
+        }
+
+        try {
+            ObjectOutputStream(FileOutputStream(filename)).use { outputStream ->
+                outputStream.writeObject(obj)
             }
         } catch (ex: Exception) {
             KiLogger.err(ex)

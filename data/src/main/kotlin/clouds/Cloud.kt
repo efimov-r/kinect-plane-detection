@@ -2,18 +2,16 @@ package clouds
 
 import era.utils.files.KiLogger
 import jdk.incubator.vector.FloatVector
+import jdk.incubator.vector.VectorMask
 import jdk.incubator.vector.VectorSpecies
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import serialize.ShortArraySerialize
+import kotlinx.coroutines.*
+import java.io.Serializable
 import kotlin.concurrent.thread
+import kotlin.math.max
 import kotlin.math.min
 
-open class Cloud(initialCapacity: Int = 1000, name: String = ""){
+
+open class Cloud(initialCapacity: Int = 1000, val name: String = "") : Serializable{
     protected var xArray = FloatArray(initialCapacity)
     protected var yArray = FloatArray(initialCapacity)
     protected var zArray = FloatArray(initialCapacity)
@@ -23,6 +21,19 @@ open class Cloud(initialCapacity: Int = 1000, name: String = ""){
             return sizeI
         }
 
+    private var minX = Float.MAX_VALUE
+    private var minY = Float.MAX_VALUE
+    private var minZ = Float.MAX_VALUE
+    private var maxX = Float.MIN_VALUE
+    private var maxY = Float.MIN_VALUE
+    private var maxZ = Float.MIN_VALUE
+    private var minmaxRelevant = false
+
+    companion object {
+        @JvmStatic
+        private val serialVersionUID = -6401584170084423324L
+    }
+
     open fun add(x: Float, y: Float, z: Float) {
         if (sizeI == xArray.size) {
             resize(sizeI * 2)
@@ -31,9 +42,52 @@ open class Cloud(initialCapacity: Int = 1000, name: String = ""){
         yArray[sizeI] = y
         zArray[sizeI] = z
         sizeI++
+        minmaxRelevant = false
+    }
+
+    fun add(cloud: Cloud, li: List<Int>) {
+        if(sizeI + li.size > xArray.size) {
+            val newCap = max(sizeI + li.size, sizeI * 2)
+            resize(newCap)
+        }
+        for(i in 0 until li.size) {
+            val ci = li[i]
+            if(ci < Integer.MAX_VALUE) {
+                xArray[sizeI] = cloud.xArray[ci]
+                yArray[sizeI] = cloud.yArray[ci]
+                zArray[sizeI] = cloud.zArray[ci]
+                sizeI++
+            }
+        }
+        minmaxRelevant = false
+    }
+
+    fun add(a: Cloud) {
+        val newCap = sizeI + a.sizeI
+        if (newCap > xArray.size) {
+            val newSize = maxOf(newCap, xArray.size * 2)
+            resize(newSize)
+        }
+        System.arraycopy(a.xArray, 0, xArray, sizeI, a.sizeI)
+        System.arraycopy(a.yArray, 0, yArray, sizeI, a.sizeI)
+        System.arraycopy(a.zArray, 0, zArray, sizeI, a.sizeI)
+        sizeI += a.sizeI
+
+        if(a.minmaxRelevant && minmaxRelevant) {
+            if(a.minX < minX) minX = a.minX
+            if(a.minY < minY) minY = a.minY
+            if(a.minZ < minZ) minZ = a.minZ
+
+            if(a.maxX > maxX) maxX = a.maxX
+            if(a.maxY > maxY) maxY = a.maxY
+            if(a.maxZ > maxZ) maxZ = a.maxZ
+        } else {
+            minmaxRelevant = false
+        }
     }
 
     protected fun resize(newCapacity: Int) {
+        KiLogger.inf("resize ${name}, old cap: ${xArray.size}, new cap: ${newCapacity}")
         xArray = xArray.copyOf(newCapacity)
         yArray = yArray.copyOf(newCapacity)
         zArray = zArray.copyOf(newCapacity)
@@ -43,6 +97,7 @@ open class Cloud(initialCapacity: Int = 1000, name: String = ""){
         matrix: Array<FloatArray>,
         threads: Int = Runtime.getRuntime().availableProcessors()
     ) {
+        minmaxRelevant = false
         val SPEC = FloatVector.SPECIES_PREFERRED
         val len = SPEC.length()
         val chunkSize = (size + threads - 1) / threads
@@ -97,6 +152,7 @@ open class Cloud(initialCapacity: Int = 1000, name: String = ""){
     }
 
     fun transformSIMD(matrix: Array<FloatArray>) {
+        minmaxRelevant = false
         val SPEC = FloatVector.SPECIES_PREFERRED
         val len = SPEC.length()
 
@@ -146,11 +202,24 @@ open class Cloud(initialCapacity: Int = 1000, name: String = ""){
         }
     }
 
+    fun forEachIndexed(action: (x: Float, y: Float, z: Float, i: Int) -> Unit) {
+        for (i in 0 until size) {
+            action(xArray[i], yArray[i], zArray[i], i)
+        }
+    }
+
+    fun forEachIndexed(action: (x: Float, i: Int) -> Unit) {
+        for (i in 0 until size) {
+            action(xArray[i], i)
+        }
+    }
+
     fun forEach(
         trX: (x: Float, y: Float, z: Float) -> Float,
         trY: (x: Float, y: Float, z: Float) -> Float,
         trZ: (x: Float, y: Float, z: Float) -> Float
     ) {
+        minmaxRelevant = false
         var vrX: Float
         var vrY: Float
         var vrZ: Float
@@ -169,8 +238,7 @@ open class Cloud(initialCapacity: Int = 1000, name: String = ""){
         trY: (x: Float, y: Float, z: Float) -> Float,
         trZ: (x: Float, y: Float, z: Float) -> Float,
         countOfThread: Int) = coroutineScope {
-
-
+        minmaxRelevant = false
         val chunk = (size + countOfThread - 1) / countOfThread
         val jobs = ArrayList<Job>(countOfThread)
 
@@ -217,6 +285,7 @@ open class Cloud(initialCapacity: Int = 1000, name: String = ""){
 
     fun clear() {
         sizeI = 0
+        minmaxRelevant = false
     }
 
     fun getX(i: Int): Float = xArray[i]
@@ -227,37 +296,83 @@ open class Cloud(initialCapacity: Int = 1000, name: String = ""){
     fun getYFV(SPECIES: VectorSpecies<Float>, offset: Int) : FloatVector = FloatVector.fromArray(SPECIES, yArray, offset)
     fun getZFV(SPECIES: VectorSpecies<Float>, offset: Int) : FloatVector = FloatVector.fromArray(SPECIES, zArray, offset)
 
-    open fun minX() : Float? = xArray.minOrNull()
-    open fun minY() : Float? = yArray.minOrNull()
-    open fun minZ() : Float? = zArray.minOrNull()
+    fun getXFV(SPECIES: VectorSpecies<Float>, offset: Int, m: VectorMask<Float>) : FloatVector = FloatVector.fromArray(SPECIES, xArray, offset, m)
+    fun getYFV(SPECIES: VectorSpecies<Float>, offset: Int, m: VectorMask<Float>) : FloatVector = FloatVector.fromArray(SPECIES, yArray, offset, m)
+    fun getZFV(SPECIES: VectorSpecies<Float>, offset: Int, m: VectorMask<Float>) : FloatVector = FloatVector.fromArray(SPECIES, zArray, offset, m)
 
-    open fun maxX() : Float? = xArray.maxOrNull()
-    open fun maxY() : Float? = yArray.maxOrNull()
-    open fun maxZ() : Float? = zArray.maxOrNull()
-
-    val objForSerialize: ShortArraySerialize
-        get() { //todo file!
-            val elementData = ShortArray(size*3)
-            var i = 0
-            forEach { x, y, z ->
-                elementData[i] = x.toInt().toShort()
-                i++
-                elementData[i] = y.toInt().toShort()
-                i++
-                elementData[i] = z.toInt().toShort()
-                i++
-            }
-            return ShortArraySerialize(elementData, size*3)
+    fun minMaxDo() {
+        if(minmaxRelevant) return
+        for(i in 0 until sizeI) {
+            val x = xArray[i]
+            val y = yArray[i]
+            val z = zArray[i]
+            if(x < minX) minX = x
+            if(y < minY) minY = y
+            if(z < minZ && z!=0f) minZ = z //todo 0f
+            if(x > maxX) maxX = x
+            if(y > maxY) maxY = y
+            if(z > maxZ) maxZ = z
         }
+        minmaxRelevant = true
+    }
 
-    fun copyOf(inp: ShortArraySerialize?) {
+    fun minX(): Float? {
+        minMaxDo()
+        return if (minX == Float.MAX_VALUE) null else minX
+    }
+    fun minY(): Float? {
+        minMaxDo()
+        return if (minY == Float.MAX_VALUE) null else minY
+    }
+    fun minZ(): Float? {
+        minMaxDo()
+        return if (minZ == Float.MAX_VALUE) null else minZ
+    }
+
+    fun maxX(): Float? {
+        minMaxDo()
+        return if (maxX == Float.MIN_VALUE) null else maxX
+    }
+    fun maxY(): Float? {
+        minMaxDo()
+        return if (maxY == Float.MIN_VALUE) null else maxY
+    }
+    fun maxZ(): Float? {
+        minMaxDo()
+        return if (maxZ == Float.MIN_VALUE) null else maxZ
+    }
+
+    fun copyOf(inp: Cloud?) {
         if (inp == null) { //todo file!
             return
         }
         clear()
-        resize(inp.getSize())
-        for (i in 0..<(inp.getSize() / 3)) {
-            add(inp.getData()[i * 3].toFloat(), inp.getData()[i * 3 + 1].toFloat(), inp.getData()[i * 3 + 2].toFloat())
+        if(inp.size > xArray.size) {
+            resize(inp.size)
         }
+        System.arraycopy(inp.xArray, 0, xArray, sizeI, inp.sizeI)
+        System.arraycopy(inp.yArray, 0, yArray, sizeI, inp.sizeI)
+        System.arraycopy(inp.zArray, 0, zArray, sizeI, inp.sizeI)
+        sizeI = inp.sizeI
+        if(inp.minmaxRelevant) {
+            minX = inp.minX
+            minY = inp.minY
+            minZ = inp.minZ
+
+            maxX = inp.maxX
+            maxY = inp.maxY
+            maxZ = inp.maxZ
+            minmaxRelevant = true
+        } else {
+            minmaxRelevant = false
+        }
+    }
+
+    fun createVoxelHash(voxelSize: Int) : LongArray {
+        val pRes = LongArray(size)
+        for (i in 0 until size) {
+            pRes[i] = Hash.createHash(xArray[i], yArray[i], zArray[i], voxelSize)
+        }
+        return pRes
     }
 }

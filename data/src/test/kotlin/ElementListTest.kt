@@ -1,5 +1,4 @@
 import viewdata.elementlist.ElementList
-import viewdata.elementlist.elements.Point
 import org.junit.jupiter.api.Test
 import java.util.*
 import kotlin.test.assertEquals

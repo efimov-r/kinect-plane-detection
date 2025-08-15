@@ -2,18 +2,18 @@ package sensors.cams.file
 
 import bufferchanel.BufferedChannel
 import bufferchanel.databuffer.BufferedCloudOfSensor
+import clouds.Cloud
 import files.serialize.KiSerializer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import sensors.cams.Cloudsorce
 import sensors.cams.kinect.KinectConstant.KINECT_DEPTH_COLS
 import sensors.cams.kinect.KinectConstant.KINECT_DEPTH_ROWS
-import serialize.ShortArraySerialize
 
 class CloudSerializer(private val channel: BufferedChannel<BufferedCloudOfSensor>): Cloudsorce {
 
     private var eventThread: EventThread? = null
-    private var kiSer: KiSerializer<ShortArraySerialize> = KiSerializer("clouds/serializedInputCloud.cl")
+    private var kiSer: KiSerializer<Cloud> = KiSerializer(System.getProperty("user.dir") + "/clouds/serializedInputCloud.cl")
     private var isRun = false
 
     override fun startDepth() {
@@ -38,17 +38,17 @@ class CloudSerializer(private val channel: BufferedChannel<BufferedCloudOfSensor
 
     suspend fun writeCloud() {
         channel.getFirstDataForRead()?.let {
-            kiSer.writeObject(it.objForSerialize)
+            kiSer.writeObject(it)
             channel.endWrite(it)
         }
     }
 
-    private class EventThread(private val kiSer: KiSerializer<ShortArraySerialize>,
+    private class EventThread(private val kiSer: KiSerializer<Cloud>,
                               private val channel: BufferedChannel<BufferedCloudOfSensor>
     ) : Thread() {
         @Volatile
         private var alive = true
-        private var fileCloud: ShortArraySerialize? = null
+        private var fileCloud: Cloud? = null
 
         init {
             setDaemon(true)
@@ -70,6 +70,7 @@ class CloudSerializer(private val channel: BufferedChannel<BufferedCloudOfSensor
                             it.width = KINECT_DEPTH_COLS
                             it.height = KINECT_DEPTH_ROWS
                             it.copyOf(fileCloud)
+                            it.minMaxDo()
                             channel.endWrite(it)
                         }
                     }

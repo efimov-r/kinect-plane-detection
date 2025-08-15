@@ -6,7 +6,7 @@ class Vector3Childed(x: Float,
                      val neighbours: ArrayList<Vector3Float> = ArrayList(),
                      val vecs: ArrayList<Vector3Float> = ArrayList()) : Vector3Float(x, y, z) { //neighboursPerpendicularVectors
 
-    fun createPerpendicularVectors() {
+    fun createPerpendicularVectors() {//todo to simd
         for (i in 0 until neighbours.size) {
             val n1x = (neighbours[i].x - x)
             val n1y = (neighbours[i].y - y)

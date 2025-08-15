@@ -3,6 +3,7 @@ package era.app
 import bufferchanel.BufferedChannel
 import bufferchanel.databuffer.BufferedChannelForView
 import bufferchanel.databuffer.BufferedCloudOfSensor
+import era.app.jobs.JobBuf
 import era.utils.files.KiLogger
 import keyboard.Keys
 import kotlinx.coroutines.Dispatchers
@@ -43,6 +44,7 @@ fun main() {
                         JobBuf.execute(formSensorChannel, toViewChannel, channelText)
                     }
                     State.SAVE -> {
+                        delay(100)
                         cloudSerializer.writeCloud()
                         KiLogger.inf("End save cloud to file")
                         state = State.DO_JOB

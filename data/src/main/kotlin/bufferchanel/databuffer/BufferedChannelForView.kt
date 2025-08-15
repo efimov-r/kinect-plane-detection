@@ -1,11 +1,9 @@
 package bufferchanel.databuffer
 
+import viewdata.buffers.CubeBuffer
+import viewdata.buffers.LineBuffer
 import viewdata.buffers.PointBuffer
-import viewdata.elementlist.ElementList
-import viewdata.elementlist.elements.Cube
-import viewdata.elementlist.elements.Line
-import viewdata.elementlist.elements.Point
-import viewdata.elementlist.elements.Triangle
+import viewdata.buffers.TriangleBuffer
 
 class BufferedChannelForView(val id: Int,
                              cubeSize: Int = 100,
@@ -13,16 +11,10 @@ class BufferedChannelForView(val id: Int,
                              pointSize: Int = 600_000, //todo &?
                              triangleSize: Int = 100) : DataForBufferedChannel {
 
-    val cubeData: ElementList<Cube> =
-        ElementList(initialCapacity = cubeSize) { Cube.createEmpty()}
-
-    val lineData: ElementList<Line> =
-        ElementList(initialCapacity = lineSize) { Line.createEmpty()}
-
+    val cubeData: CubeBuffer = CubeBuffer(cubeSize)
+    val lineData: LineBuffer = LineBuffer(lineSize)
     val pointData: PointBuffer = PointBuffer(pointSize)
-
-    val triangleData: ElementList<Triangle> =
-        ElementList(initialCapacity = triangleSize) { Triangle.createEmpty()}
+    val triangleData: TriangleBuffer = TriangleBuffer(triangleSize)
 
     override fun getIdData(): Int {
         return id

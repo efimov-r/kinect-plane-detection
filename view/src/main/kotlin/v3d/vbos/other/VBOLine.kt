@@ -33,7 +33,7 @@ class VBOLine: VBO {
 
         // Initialize the vertex buffer object
         gl.glBindBuffer(GL.GL_ARRAY_BUFFER, vertexBufferObject)
-        gl.glBufferData(GL.GL_ARRAY_BUFFER, (size.toLong()) * 8 * Sizeof.cl_float, null, GL.GL_DYNAMIC_DRAW)
+        gl.glBufferData(GL.GL_ARRAY_BUFFER, (size.toLong()) * Sizeof.cl_float, null, GL.GL_DYNAMIC_DRAW)
     }
 
     override fun render(gl: GL3, countOfVboPoint: Int) {

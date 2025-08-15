@@ -9,24 +9,11 @@ class V3dLineRunnerImpl : V3dRunner {
     }
 
     override fun getBuffSize(data: BufferedChannelForView): Int {
-        return data.lineData.size()
+        return data.lineData.arraySize
     }
 
     override fun setVertexBuffer(buffer: FloatBuffer, data: BufferedChannelForView): Int {
-        var countVertex = 0
-        data.lineData.forEach { triangle, i ->
-            buffer.put(8 * i,  triangle.v1.z)
-            buffer.put(8 * i + 1,  triangle.v1.x)
-            buffer.put(8 * i + 2,  triangle.v1.y)
-            buffer.put(8 * i + 3,  triangle.v1.color)
-
-            buffer.put(8 * i + 4,  triangle.v2.z)
-            buffer.put(8 * i + 5,  triangle.v2.x)
-            buffer.put(8 * i + 6,  triangle.v2.y)
-            buffer.put(8 * i + 7,  triangle.v2.color)
-            countVertex+=2
-        }
-        data.lineData.endRead()
-        return countVertex
+        data.lineData.dataToBuffer(buffer)
+        return data.lineData.size/4
     }
 }
