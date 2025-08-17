@@ -5,6 +5,7 @@ import jdk.incubator.vector.FloatVector
 import jdk.incubator.vector.VectorMask
 import jdk.incubator.vector.VectorSpecies
 import kotlinx.coroutines.*
+import utils.Threadripper.threadripp
 import vectors.Plane
 import java.io.Serializable
 import kotlin.concurrent.thread
@@ -242,33 +243,22 @@ open class Cloud(initialCapacity: Int = 1000, val name: String = "") : Serializa
         trZ: (x: Float, y: Float, z: Float) -> Float,
         countOfThread: Int) = coroutineScope {
         minmaxRelevant = false
-        val chunk = (size + countOfThread - 1) / countOfThread
-        val jobs = ArrayList<Job>(countOfThread)
 
-        for (t in 0 until countOfThread) {
-            val start = t * chunk
-            val end = min(size, start + chunk)
-
-            if (start >= end) break
-
-            jobs += launch(Dispatchers.Default) {
-                var i = start
-                var vrX: Float
-                var vrY: Float
-                var vrZ: Float
-                while (i < end) {
-                    vrX = trX(xArray[i], yArray[i], zArray[i])
-                    vrY = trY(xArray[i], yArray[i], zArray[i])
-                    vrZ = trZ(xArray[i], yArray[i], zArray[i])
-                    xArray[i] = vrX
-                    yArray[i] = vrY
-                    zArray[i] = vrZ
-                    i++
-                }
+        threadripp(size, countOfThread) { start, end ->
+            var i = start
+            var vrX: Float
+            var vrY: Float
+            var vrZ: Float
+            while (i < end) {
+                vrX = trX(xArray[i], yArray[i], zArray[i])
+                vrY = trY(xArray[i], yArray[i], zArray[i])
+                vrZ = trZ(xArray[i], yArray[i], zArray[i])
+                xArray[i] = vrX
+                yArray[i] = vrY
+                zArray[i] = vrZ
+                i++
             }
         }
-
-        jobs.joinAll()
     }
 
     fun parallelForEach(chunkSize: Int = 1000, action: (x: Float, y: Float, z: Float) -> Unit) {
@@ -375,14 +365,6 @@ open class Cloud(initialCapacity: Int = 1000, val name: String = "") : Serializa
         }
     }
 
-    fun createVoxelHash(voxelSize: Int) : LongArray {
-        val pRes = LongArray(size)
-        for (i in 0 until size) {
-            pRes[i] = Hash.createHash(xArray[i], yArray[i], zArray[i], voxelSize)
-        }
-        return pRes
-    }
-
     fun planeFromPoints(p1: Int, p2: Int, p3: Int): Plane? {
         // Векторы
         val ux = xArray[p2] - xArray[p1]
@@ -405,50 +387,6 @@ open class Cloud(initialCapacity: Int = 1000, val name: String = "") : Serializa
         val d = -1 * md
         return Plane(a, b, c, d, p1, p2, p3)
     }
-
-    //можно на gpu
-//    fun getInliersSIMD(plane: Plane, eps: Float): List<Int> {
-//        val inliers = mutableListOf<Int>()
-//
-//        val species = FloatVector.SPECIES_PREFERRED
-//        val len = species.length()
-//
-//        val aVec = FloatVector.broadcast(species, plane.a)
-//        val bVec = FloatVector.broadcast(species, plane.b)
-//        val cVec = FloatVector.broadcast(species, plane.c)
-//        val dVec = FloatVector.broadcast(species, plane.d)
-//
-//        val epsNorm = eps * plane.getNorm()
-//
-//        var i = 0
-//        while (i < size) {
-//            if(i <= size - len) {
-//                // dot = ax + by + cz + d
-//                val dot = aVec.mul(getXFV(species, i))
-//                    .add(bVec.mul(getYFV(species, i)))
-//                    .add(cVec.mul(getZFV(species, i)))
-//                    .add(dVec).abs()
-//
-//                // сравнение с epsNorm
-//                val mask = dot.lt(FloatVector.broadcast(species, epsNorm))
-//
-//                // собрать индексы
-//                for (j in 0 until len) {
-//                    if (mask.laneIsSet(j)) {
-//                        inliers.add(i + j)
-//                    }
-//                }
-//
-//                i += len
-//            } else {
-//                val dot = abs(plane.a * xArray[i] + plane.b * yArray[i] + plane.c * zArray[i] + plane.d)
-//                if (dot < epsNorm) inliers.add(i)
-//                i++
-//            }
-//        }
-//
-//        return inliers
-//    }
 
     fun distSquared(p1: Int, p2: Int) : Float {
         val dx = xArray[p1] - xArray[p2]

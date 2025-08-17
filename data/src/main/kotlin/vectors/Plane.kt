@@ -29,6 +29,7 @@ data class Plane(
         return "Плоскость A=${a}, B=${b}, C=${c}, D=${d}"
     }
 
+    //можно на gpu
     fun setInliersSIMD(cloud: Cloud, eps: Float) {
         val species = FloatVector.SPECIES_PREFERRED
         val len = species.length()

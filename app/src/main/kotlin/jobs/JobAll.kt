@@ -6,92 +6,49 @@ import clouds.Hash
 import clouds.KDTree
 import era.app.utils.subclouders.Voxeler
 import era.utils.files.KiLogger
-import era.utils.time.Span
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.launch
+import utils.Threadripper.threadripp
 import vectors.Plane
+import kotlin.math.min
 
 object JobAll {
 
-    val span = Span()
+    private const val COT_CREATE_HASH = 4
+    private const val COT_FIND_PLAINS = 20
+    private const val MIN_POINT_IN_PLAINS = 8
 
 
-    fun CoroutineScope.doJobAll(
+
+
+    suspend fun CoroutineScope.doJobAll(
         fastCloud: Cloud, writeCloud: BufferedChannelForView
-    ) = async(Dispatchers.IO) {
-        val hashFastCloud = Hash(300)
-        hashFastCloud.create(fastCloud)
-        val voxelCloud = Voxeler.createVoxelsFromHash(fastCloud, hashFastCloud)
+    ) = launch (Dispatchers.IO) {
+        val voxelCloud = createVoxelCloud(fastCloud, COT_CREATE_HASH)
+        val planes = findPlanesDeterministic(voxelCloud, COT_FIND_PLAINS)
+//                KiLogger.inf("ddd: ${planes.size}")
+    }.join()
 
-        val planes = findPlanesDeterministic(voxelCloud)
-
+    private suspend fun createVoxelCloud(fastCloud: Cloud, countOfThread: Int) : Cloud {
+        val hashFastCloud = Hash(300, fastCloud)
+        hashFastCloud.init(countOfThread)
+        return Voxeler.createVoxelsFromHash(fastCloud, hashFastCloud, countOfThread)
     }
 
-    private fun createFPlans(cloud: Cloud) : MutableList<Plane> {
-        val fPlans = mutableListOf<Plane>()
-        val maxDistSquared = 400*400
-        // полный перебор троек среди оставшихся
-        for (a in 0 until cloud.size - 2) {
-            for (b in a + 1 until cloud.size - 1) {
-                if(cloud.distSquared(a, b) < maxDistSquared) {
-                    for (c in b + 1 until cloud.size) {
-                        if(cloud.distSquared(a, c) < maxDistSquared) {
-                            if(cloud.distSquared(b, c) < maxDistSquared) {
-                                cloud.planeFromPoints(a, b, c)?.let{
-                                    fPlans.add(it)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return fPlans
-    }
-
-    private fun createFPlans2(cloud: Cloud) : MutableList<Plane> {
-        val fPlans = mutableListOf<Plane>()
-        val maxDist = 400
-        val maxDistFloat = maxDist.toFloat()
-        val maxDistSquared = maxDist * maxDist
-
-        val tree = KDTree.instanceSingle(cloud) //todo parallel
-        for (a in 0 until cloud.size - 2) {
-            val aNei = tree.radiusSearch(maxDistFloat, a)
-            for (b in 0 until aNei.size - 1) {
-                for (c in 0 until aNei.size) {
-                    val bT = aNei[b]
-                    val cT = aNei[c]
-                    if(cloud.distSquared(bT, cT) < maxDistSquared) {
-                        cloud.planeFromPoints(a, bT, cT)?.let{
-                            fPlans.add(it)
-                        }
-                    }
-                }
-            }
-        }
-
-        return fPlans
-    }
-
-    private fun findPlanesDeterministic(
+    private suspend fun CoroutineScope.findPlanesDeterministic(
         cloud: Cloud,
-        eps: Float = 1e-3f,
-        minPoints: Int = 8
+        countOfThread: Int,
+        eps: Float = 1e-3f
     ): List<Plane> {
 
+        val fPlans = createFPlans(cloud, countOfThread)
 
-        val fPlans = createFPlans2(cloud)
+        setInlinersAll(fPlans, eps, cloud, countOfThread) //долгое, полторы на 10 потоках
 
-        span.resetTimer()
-        fPlans.forEach { plane ->
-            plane.setInliersSIMD(cloud, eps)
-        }
-        span.middleCircle(100, "create fPlans")
-
-        fPlans.removeIf { plane -> plane.points.size < minPoints }
-
+        fPlans.removeIf { plane -> plane.points.size < MIN_POINT_IN_PLAINS }
         val gPlans = mutableListOf<Plane>()
 
         while(fPlans.isNotEmpty()) {
@@ -117,11 +74,58 @@ object JobAll {
             }
         }
 
-
-
-        KiLogger.inf("ddd: ${gPlans.size}")
         return gPlans
     }
+
+    private suspend fun CoroutineScope.createFPlans(cloud: Cloud, countOfThread: Int) : MutableList<Plane> {
+        val tree = KDTree.instanceParallel(cloud)
+
+        val maxDist = 400
+        val maxDistFloat = maxDist.toFloat()
+        val maxDistSquared = maxDist * maxDist
+        val size = cloud.size-2
+        val chunk = (size + countOfThread - 1) / countOfThread
+
+        return (0 until countOfThread).map { t->
+            async(Dispatchers.Default) {
+                val start = t * chunk
+                val end = min(size, start + chunk)
+                val fPlansLocal = mutableListOf<Plane>()
+                if (start < end) {
+                    for (a in start until end) {
+                        val aNei = tree.radiusSearch(maxDistFloat, a)
+                        for (b in 0 until aNei.size - 1) {
+                            for (c in 1 until aNei.size) {
+                                val bT = aNei[b]
+                                val cT = aNei[c]
+                                if (cloud.distSquared(bT, cT) < maxDistSquared) {
+                                    cloud.planeFromPoints(a, bT, cT)?.let {
+                                        fPlansLocal.add(it)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return@async fPlansLocal
+            }
+        }.awaitAll().flatten().toMutableList()
+    }
+
+    private suspend fun CoroutineScope.setInlinersAll(
+        fPlans: MutableList<Plane>,
+        eps: Float,
+        cloud: Cloud,
+        countOfThread: Int)
+    {
+        threadripp(fPlans.size, countOfThread) { start, end ->
+            for(i in start until end){
+                fPlans[i].setInliersSIMD(cloud, eps)
+            }
+        }
+    }
+
+
 
 
 }

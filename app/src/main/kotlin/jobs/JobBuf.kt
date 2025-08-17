@@ -44,7 +44,7 @@ object JobBuf {
 
                     val fastCloud = CloudOfSensorCompressor.compressHexadrupleRare(readCloud)
 
-                    doJobAll(fastCloud, writeCloud).join()
+                    doJobAll(fastCloud, writeCloud)
 
 //                    val vectorP = doJobChank(fastCloud, writeCloud).await()
 //
