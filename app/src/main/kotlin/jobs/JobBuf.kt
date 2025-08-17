@@ -44,7 +44,7 @@ object JobBuf {
 
                     val fastCloud = CloudOfSensorCompressor.compressHexadrupleRare(readCloud)
 
-                    doJobAll(fastCloud, writeCloud)
+                    doJobAll(fastCloud, writeCloud).join()
 
 //                    val vectorP = doJobChank(fastCloud, writeCloud).await()
 //
@@ -60,7 +60,7 @@ object JobBuf {
 //                        writeCloud.pointData.ofCloud(readCloud, 0f, AppConstants.AD_MAX_MM_ON_V3D, 10)
                     writeCloud.pointData.ofCloud(fastCloud, 0f, AppConstants.AD_MAX_MM_ON_V3D, 10)
                     span.middleCircle(100, "All")
-                    delay(10)
+//                    delay(30)
 
                     toViewChannel.endWrite(writeCloud)
                 }

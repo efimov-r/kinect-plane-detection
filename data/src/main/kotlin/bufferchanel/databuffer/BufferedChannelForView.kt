@@ -6,10 +6,10 @@ import viewdata.buffers.PointBuffer
 import viewdata.buffers.TriangleBuffer
 
 class BufferedChannelForView(val id: Int,
-                             cubeSize: Int = 100,
-                             lineSize: Int = 100,
+                             cubeSize: Int = 400,
+                             lineSize: Int = 400,
                              pointSize: Int = 600_000, //todo &?
-                             triangleSize: Int = 100) : DataForBufferedChannel {
+                             triangleSize: Int = 400) : DataForBufferedChannel {
 
     val cubeData: CubeBuffer = CubeBuffer(cubeSize)
     val lineData: LineBuffer = LineBuffer(lineSize)

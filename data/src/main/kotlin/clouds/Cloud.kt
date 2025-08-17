@@ -5,10 +5,13 @@ import jdk.incubator.vector.FloatVector
 import jdk.incubator.vector.VectorMask
 import jdk.incubator.vector.VectorSpecies
 import kotlinx.coroutines.*
+import vectors.Plane
 import java.io.Serializable
 import kotlin.concurrent.thread
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.sqrt
 
 
 open class Cloud(initialCapacity: Int = 1000, val name: String = "") : Serializable{
@@ -292,13 +295,17 @@ open class Cloud(initialCapacity: Int = 1000, val name: String = "") : Serializa
     fun getY(i: Int): Float = yArray[i]
     fun getZ(i: Int): Float = zArray[i]
 
-    fun getXFV(SPECIES: VectorSpecies<Float>, offset: Int) : FloatVector = FloatVector.fromArray(SPECIES, xArray, offset)
-    fun getYFV(SPECIES: VectorSpecies<Float>, offset: Int) : FloatVector = FloatVector.fromArray(SPECIES, yArray, offset)
-    fun getZFV(SPECIES: VectorSpecies<Float>, offset: Int) : FloatVector = FloatVector.fromArray(SPECIES, zArray, offset)
+    fun getXFV(species: VectorSpecies<Float>, offset: Int) : FloatVector = FloatVector.fromArray(species, xArray, offset)
+    fun getYFV(species: VectorSpecies<Float>, offset: Int) : FloatVector = FloatVector.fromArray(species, yArray, offset)
+    fun getZFV(species: VectorSpecies<Float>, offset: Int) : FloatVector = FloatVector.fromArray(species, zArray, offset)
 
-    fun getXFV(SPECIES: VectorSpecies<Float>, offset: Int, m: VectorMask<Float>) : FloatVector = FloatVector.fromArray(SPECIES, xArray, offset, m)
-    fun getYFV(SPECIES: VectorSpecies<Float>, offset: Int, m: VectorMask<Float>) : FloatVector = FloatVector.fromArray(SPECIES, yArray, offset, m)
-    fun getZFV(SPECIES: VectorSpecies<Float>, offset: Int, m: VectorMask<Float>) : FloatVector = FloatVector.fromArray(SPECIES, zArray, offset, m)
+    fun getXFV(species: VectorSpecies<Float>, offset: Int, m: VectorMask<Float>) : FloatVector = FloatVector.fromArray(species, xArray, offset, m)
+    fun getYFV(species: VectorSpecies<Float>, offset: Int, m: VectorMask<Float>) : FloatVector = FloatVector.fromArray(species, yArray, offset, m)
+    fun getZFV(species: VectorSpecies<Float>, offset: Int, m: VectorMask<Float>) : FloatVector = FloatVector.fromArray(species, zArray, offset, m)
+
+    fun getXFVB(species: VectorSpecies<Float>, index: Int) : FloatVector = FloatVector.broadcast(species, xArray[index])
+    fun getYFVB(species: VectorSpecies<Float>, index: Int) : FloatVector = FloatVector.broadcast(species, yArray[index])
+    fun getZFVB(species: VectorSpecies<Float>, index: Int) : FloatVector = FloatVector.broadcast(species, zArray[index])
 
     fun minMaxDo() {
         if(minmaxRelevant) return
@@ -374,5 +381,79 @@ open class Cloud(initialCapacity: Int = 1000, val name: String = "") : Serializa
             pRes[i] = Hash.createHash(xArray[i], yArray[i], zArray[i], voxelSize)
         }
         return pRes
+    }
+
+    fun planeFromPoints(p1: Int, p2: Int, p3: Int): Plane? {
+        // Векторы
+        val ux = xArray[p2] - xArray[p1]
+        val uy = yArray[p2] - yArray[p1]
+        val uz = zArray[p2] - zArray[p1]
+
+        val vx = xArray[p3] - xArray[p1]
+        val vy = yArray[p3] - yArray[p1]
+        val vz = zArray[p3] - zArray[p1]
+
+        // нормаль = u × v
+        val a = uy * vz - uz * vy
+        val b = uz * vx - ux * vz
+        val c = ux * vy - uy * vx
+
+        val norm = sqrt(a * a + b * b + c * c)
+        if (norm < 1e-6f) return null // коллинеарные точки → плоскость не существует
+
+        val md = a * xArray[p1] + b * yArray[p1] + c * zArray[p1]
+        val d = -1 * md
+        return Plane(a, b, c, d, p1, p2, p3)
+    }
+
+    //можно на gpu
+//    fun getInliersSIMD(plane: Plane, eps: Float): List<Int> {
+//        val inliers = mutableListOf<Int>()
+//
+//        val species = FloatVector.SPECIES_PREFERRED
+//        val len = species.length()
+//
+//        val aVec = FloatVector.broadcast(species, plane.a)
+//        val bVec = FloatVector.broadcast(species, plane.b)
+//        val cVec = FloatVector.broadcast(species, plane.c)
+//        val dVec = FloatVector.broadcast(species, plane.d)
+//
+//        val epsNorm = eps * plane.getNorm()
+//
+//        var i = 0
+//        while (i < size) {
+//            if(i <= size - len) {
+//                // dot = ax + by + cz + d
+//                val dot = aVec.mul(getXFV(species, i))
+//                    .add(bVec.mul(getYFV(species, i)))
+//                    .add(cVec.mul(getZFV(species, i)))
+//                    .add(dVec).abs()
+//
+//                // сравнение с epsNorm
+//                val mask = dot.lt(FloatVector.broadcast(species, epsNorm))
+//
+//                // собрать индексы
+//                for (j in 0 until len) {
+//                    if (mask.laneIsSet(j)) {
+//                        inliers.add(i + j)
+//                    }
+//                }
+//
+//                i += len
+//            } else {
+//                val dot = abs(plane.a * xArray[i] + plane.b * yArray[i] + plane.c * zArray[i] + plane.d)
+//                if (dot < epsNorm) inliers.add(i)
+//                i++
+//            }
+//        }
+//
+//        return inliers
+//    }
+
+    fun distSquared(p1: Int, p2: Int) : Float {
+        val dx = xArray[p1] - xArray[p2]
+        val dy = yArray[p1] - yArray[p2]
+        val dz = zArray[p1] - zArray[p2]
+        return dx*dx + dy*dy + dz*dz
     }
 }
