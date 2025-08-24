@@ -6,12 +6,12 @@ import java.lang.Integer.max
 
 class CubeBuffer(initialCapasity: Int = 10) : ViewBuffer(initialCapasity) {
 
-    fun writeCube(vector: Vector3Float, multFor3D: Float) {
+    fun writeCube(vector: Vector3Float, color:Float, multFor3D: Float) {
         resizeForCube(1)
         addDat(vector.z * multFor3D)
         addDat(vector.x * multFor3D)
         addDat(vector.y * multFor3D)
-        addDat(0f)
+        addDat(color)
         updated()
     }
 

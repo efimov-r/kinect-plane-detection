@@ -14,6 +14,6 @@ class V3dTriangleRunnerImpl : V3dRunner {
 
     override fun setVertexBuffer(buffer: FloatBuffer, data: BufferedChannelForView): Int {
         data.triangleData.dataToBuffer(buffer)
-        return data.pointData.size/4
+        return data.triangleData.size/4
     }
 }

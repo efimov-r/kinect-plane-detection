@@ -2,6 +2,7 @@ package bufferchanel.databuffer
 
 import viewdata.buffers.CubeBuffer
 import viewdata.buffers.LineBuffer
+import viewdata.buffers.PlanesBuffer
 import viewdata.buffers.PointBuffer
 import viewdata.buffers.TriangleBuffer
 
@@ -11,10 +12,12 @@ class BufferedChannelForView(val id: Int,
                              pointSize: Int = 600_000, //todo &?
                              triangleSize: Int = 400) : DataForBufferedChannel {
 
+    //todo перевести размерность буфера в размерность по количеству точек
     val cubeData: CubeBuffer = CubeBuffer(cubeSize)
     val lineData: LineBuffer = LineBuffer(lineSize)
     val pointData: PointBuffer = PointBuffer(pointSize)
     val triangleData: TriangleBuffer = TriangleBuffer(triangleSize)
+    val planesData: PlanesBuffer = PlanesBuffer(20)
 
     override fun getIdData(): Int {
         return id

@@ -6,27 +6,149 @@ import kotlin.math.abs
 import kotlin.math.sqrt
 
 data class Plane(
-    val a: Float,
-    val b: Float,
-    val c: Float,
-    val d: Float,
-    val p1i: Int,
-    val p2i: Int,
-    val p3i: Int,
-    var norm: Float? = null
+    private val a: Float,
+    private val b: Float,
+    private val c: Float,
+    private val d: Float,
+    private val p1i: Int,
+    private val p2i: Int,
+    private val p3i: Int,
+    private var norm: Float? = null,
+    private val cloud: Cloud
 ) {
 
     val points: HashSet<Int> = mutableSetOf<Int>() as HashSet<Int>
 
-    fun getNorm() : Float {
+    private fun getNorm() : Float {
         if(norm == null) {
             norm = sqrt(a * a + b * b + c * c)
         }
         return norm!!
     }
 
-    override fun toString(): String {
-        return "Плоскость A=${a}, B=${b}, C=${c}, D=${d}"
+    fun getNormalize() = Vector3Float(a,b,c).normalize()
+
+    fun getP1() = cloud.getVec(p1i)
+    fun getP2() = cloud.getVec(p2i)
+    fun getP3() = cloud.getVec(p3i)
+    fun getPofCloud(p: Int) = cloud.getVec(p)
+
+    fun filterPointsByDistanceCircle(
+        maxGap: Float, pointCenter: Int
+    ) {
+        if (points.isEmpty()) return
+
+        var changed: Boolean
+        do {
+            changed = false
+
+            for (coord in 0..2) {
+                val sorted = points.sortedBy { idx ->
+                    when (coord) {
+                        0 -> cloud.getX(idx)
+                        1 -> cloud.getY(idx)
+                        else -> cloud.getZ(idx)
+                    }
+                }
+
+                val centerVal = when (coord) {
+                    0 -> cloud.getX(pointCenter)
+                    1 -> cloud.getY(pointCenter)
+                    else -> cloud.getZ(pointCenter)
+                }
+
+                val centerPos = sorted.indexOf(pointCenter)
+                if (centerPos == -1) continue // центр не в points
+
+                var cutPosLeft = -1
+                var cutPosRight = -1
+
+                // идем влево
+                var prev = centerVal
+                for (i in centerPos - 1 downTo 0) {
+                    val cur = when (coord) {
+                        0 -> cloud.getX(sorted[i])
+                        1 -> cloud.getY(sorted[i])
+                        else -> cloud.getZ(sorted[i])
+                    }
+                    if (prev - cur > maxGap) {
+                        cutPosLeft = i
+                        break
+                    }
+                    prev = cur
+                }
+
+                // идем вправо
+                prev = centerVal
+                for (i in centerPos + 1 until sorted.size) {
+                    val cur = when (coord) {
+                        0 -> cloud.getX(sorted[i])
+                        1 -> cloud.getY(sorted[i])
+                        else -> cloud.getZ(sorted[i])
+                    }
+                    if (cur - prev > maxGap) {
+                        cutPosRight = i
+                        break
+                    }
+                    prev = cur
+                }
+
+                if (cutPosLeft != -1) {
+                    val toRemove = sorted.subList(0, cutPosLeft + 1)
+                    points.removeAll(toRemove.toSet())
+                    changed = true
+                }
+
+                if (cutPosRight != -1) {
+                    val toRemove = sorted.subList(cutPosRight, sorted.size)
+                    points.removeAll(toRemove.toSet())
+                    changed = true
+                }
+            }
+        } while (changed)
+    }
+
+    fun filterPointsByDistance(
+        maxGap: Float, pointCenter: Int
+    ) {
+        // 1. Создаем список пар (индекс, расстояние до reference)
+        val distances = points.map { idx ->
+            val dx = cloud.getX(idx) - cloud.getX(pointCenter)
+            val dy = cloud.getY(idx) - cloud.getY(pointCenter)
+            val dz = cloud.getZ(idx) - cloud.getZ(pointCenter)
+            idx to sqrt(dx*dx + dy*dy + dz*dz)
+        }
+
+        // 2. Сортируем по расстоянию
+        val sorted = distances.sortedBy { it.second }
+
+        // 3. Находим первый разрыв, превышающий maxGap
+        var cutoffIndex = sorted.size
+        for (i in 0 until sorted.size - 1) {
+            val gap = sorted[i + 1].second - sorted[i].second
+            if (gap > maxGap) {
+                cutoffIndex = i + 1
+                break
+            }
+        }
+
+        // 4. Удаляем из points все после разрыва
+        val toRemove = sorted.subList(cutoffIndex, sorted.size).map { it.first }
+        points.removeAll(toRemove)
+    }
+
+    fun isPointOnPlane(index: Int, eps: Float): Boolean {
+        val value = a * cloud.getX(index) + b * cloud.getY(index) + c * cloud.getZ(index) + d
+        return abs(value) < eps
+    }
+
+    fun isPointOnPlane(x: Float, y: Float, z: Float, eps: Float): Boolean {
+        val value = a * x + b * y + c * z + d
+        return abs(value) < eps
+    }
+
+    fun isPointOnPlaneFast(index: Int): Boolean {
+        return points.contains(index)
     }
 
     //можно на gpu
@@ -69,5 +191,40 @@ data class Plane(
         }
     }
 
+    override fun toString(): String {
+        return "Plane(a=$a, b=$b, c=$c, d=$d)"
+    }
+
+    fun area(): Float {
+        require(points.isNotEmpty()) { "Нет точек" }
+
+        // нормаль плоскости
+        val n = Vector3Float(a, b, c).normalize()
+        val tmp = if (abs(n.x) < 0.9f) Vector3Float(1f, 0f, 0f) else Vector3Float(0f, 1f, 0f)
+        val u = tmp.cross(n).normalize()
+        val v = n.cross(u).normalize()
+
+        // первая точка плоскости
+        val firstIdx = points.first()
+        val p0 = cloud.getVec(firstIdx)
+
+        var minU = Float.POSITIVE_INFINITY
+        var maxU = Float.NEGATIVE_INFINITY
+        var minV = Float.POSITIVE_INFINITY
+        var maxV = Float.NEGATIVE_INFINITY
+
+        for (i in points) {
+            val p = cloud.getVec(i)
+            val rel = p - p0
+            val pu = rel.dot(u)
+            val pv = rel.dot(v)
+            if (pu < minU) minU = pu.toFloat()
+            if (pu > maxU) maxU = pu.toFloat()
+            if (pv < minV) minV = pv.toFloat()
+            if (pv > maxV) maxV = pv.toFloat()
+        }
+
+        return (maxU - minU)*(maxV - minV)
+    }
 
 }

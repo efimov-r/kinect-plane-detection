@@ -7,8 +7,10 @@ import v3d.runners.*
 import v3d.shaders.V3dGeometryCubeLineShader
 import v3d.shaders.V3dGeometryCubeShader
 import v3d.shaders.V3dPointsShader
+import v3d.shaders.V3dPointsShaderAlpha
 import v3d.vbos.model.VBOModelImpl
 import v3d.vbos.other.VBOLine
+import v3d.vbos.other.VBOPlanes
 import v3d.vbos.other.VBOPoints
 import v3d.vbos.other.VBOTriangle
 
@@ -19,6 +21,7 @@ object ComplectFactory {
         v3dComplects.add(createCubeComplect(cubeSize = cubeSize))
         v3dComplects.add(createTrianglesComplect())
         v3dComplects.add(createLineComplect())
+        v3dComplects.add(createPlanesComplect())
         return v3dComplects
     }
 
@@ -52,6 +55,12 @@ object ComplectFactory {
     private fun createLineComplect(startSizeBuffer: Int = 100): V3dComplect {
         val res = V3dComplect(V3dLineRunnerImpl(), VBOLine(), currentSizeBuff = startSizeBuffer)
         res.shaders.add(V3dPointsShader())
+        return res
+    }
+
+    private fun createPlanesComplect(startSizeBuffer: Int = 100): V3dComplect {
+        val res = V3dComplect(V3dPlanesRunnerImpl(), VBOPlanes(), currentSizeBuff = startSizeBuffer)
+        res.shaders.add(V3dPointsShaderAlpha())
         return res
     }
 }

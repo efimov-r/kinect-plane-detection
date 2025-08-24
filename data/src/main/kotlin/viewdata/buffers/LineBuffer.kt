@@ -54,17 +54,17 @@ class LineBuffer(initialCapasity: Int = 10) : ViewBuffer(initialCapasity) {
         updated()
     }
 
-    fun addVec(v1: Vector3Float, v2: Vector3Float, multFor3D: Float) {
+    fun addVec(v1: Vector3Float, v2: Vector3Float, color: Float, multFor3D: Float) {
         resizeForVEctors(1)
         addDat(v1.z * multFor3D)
         addDat(v1.x * multFor3D)
         addDat(v1.y * multFor3D)
-        addDat(1f)
+        addDat(color)
 
         addDat(v2.z * multFor3D)
         addDat(v2.x * multFor3D)
         addDat(v2.y * multFor3D)
-        addDat(1f)
+        addDat(color)
         updated()
     }
 

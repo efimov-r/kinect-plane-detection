@@ -6,66 +6,82 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import utils.Threadripper.threadripp
+import java.util.concurrent.ThreadLocalRandom
 
 object Voxeler {
 
-    suspend fun createVoxelsFromHash(cloud: Cloud, hash: Hash, countOfThread: Int) : Cloud =
-        coroutineScope {
-        val mapHash = hash.getVoxelMap(50, countOfThread)
+    suspend fun createVoxelsFromHash(cloud: Cloud, hash: Hash, countOfThread: Int) : Cloud {
+//        coroutineScope {
+        val mapHash = hash.getVoxelMap(50) //todo тут заменил на однопоток для стабильности
 
-            val entries = mapHash.entries.toList()
-            val indexs = ArrayList<Int>(mapHash.size)
-
-            threadripp(mapHash.size, countOfThread) { start, end ->
-                for (idx in start until end) {
-                    val (v, l) = entries[idx]
-
-                    var minLength = Float.MAX_VALUE
-                    var indexMinL = Integer.MAX_VALUE
-
-                    val vx = Hash.getX(v, hash.voxelSize)
-                    val vy = Hash.getY(v, hash.voxelSize)
-                    val vz = Hash.getZ(v, hash.voxelSize)
-
-                    for (i in l) {
-                        val ax = cloud.getX(i) - vx
-                        val ay = cloud.getY(i) - vy
-                        val az = cloud.getZ(i) - vz
-                        val length = ax*ax + ay*ay + az*az
-                        if (length < minLength) {
-                            minLength = length
-                            indexMinL = i
-                        }
-                    }
-
-                    indexs.add(indexMinL)
-                }
-            }
-            val res = Cloud(indexs.size, "res")
-            res.add(cloud, indexs)
-            return@coroutineScope res
-        }
-
-//        val indexs = ArrayList<Int>(mapHash.size)
-//        mapHash.forEach { (v, l) ->
-//            var minLength = Float.MAX_VALUE
-//            var indexMinL: Int = Integer.MAX_VALUE
-//            l.forEach { i ->
-//                val ax = cloud.getX(i) - Hash.getX(v, hash.voxelSize)
-//                val ay = cloud.getY(i) - Hash.getY(v, hash.voxelSize)
-//                val az = cloud.getZ(i) - Hash.getZ(v, hash.voxelSize)
-//                val length = (ax * ax) + (ay * ay) + (az * az)
-//                if (length < minLength) {
-//                    minLength = length
-//                    indexMinL = i
+//            val entries = mapHash.entries.toList()
+//            val indexs = ArrayList<Int>(mapHash.size)
+//
+//            threadripp(mapHash.size, countOfThread) { start, end ->
+//                for (idx in start until end) {
+//                    val (v, l) = entries[idx]
+//
+//                    var minLength = Float.MAX_VALUE
+//                    var indexMinL = Integer.MAX_VALUE
+//
+//                    val vx = Hash.getX(v, hash.voxelSize)
+//                    val vy = Hash.getY(v, hash.voxelSize)
+//                    val vz = Hash.getZ(v, hash.voxelSize)
+//
+//                    for (i in l) {
+//                        val ax = cloud.getX(i) - vx
+//                        val ay = cloud.getY(i) - vy
+//                        val az = cloud.getZ(i) - vz
+//                        val length = ax*ax + ay*ay + az*az
+//                        if (length < minLength) {
+//                            minLength = length
+//                            indexMinL = i
+//                        }
+//                    }
+//
+//                    indexs.add(indexMinL)
 //                }
 //            }
-//            indexs.add(indexMinL)
+//            val res = Cloud(indexs.size, "res")
+//            res.add(cloud, indexs)
+//            return@coroutineScope res
 //        }
-//        val res = Cloud(indexs.size, "res")
-//        res.add(cloud, indexs)
-//        return res
-//    }
+
+        val indexs = ArrayList<Int>(mapHash.size)
+        mapHash.forEach { (v, l) ->
+            var minLength = Float.MAX_VALUE
+            var indexMinL: Int = Integer.MAX_VALUE
+            l.forEach { i ->
+                val ax = cloud.getX(i) - Hash.getX(v, hash.voxelSize)
+                val ay = cloud.getY(i) - Hash.getY(v, hash.voxelSize)
+                val az = cloud.getZ(i) - Hash.getZ(v, hash.voxelSize)
+                val length = (ax * ax) + (ay * ay) + (az * az)
+                if (length < minLength) {
+                    minLength = length
+                    indexMinL = i
+                }
+            }
+            indexs.add(indexMinL)
+        }
+        val res = Cloud(indexs.size, "res")
+        res.add(cloud, indexs)
+        return res
+    }
+
+    val rnd = ThreadLocalRandom.current()
+
+    fun createVoxelsRandomFromHash(cloud: Cloud, hash: Hash, countOfThread: Int) : Cloud {
+        val mapHash = hash.getVoxelMap(50) //todo тут заменил на однопоток для стабильности
+
+        val indexs = ArrayList<Int>(mapHash.size)
+        mapHash.forEach { (v, l) ->
+            val i = l[rnd.nextInt(l.size)]
+            indexs.add(i)
+        }
+        val res = Cloud(indexs.size, "res")
+        res.add(cloud, indexs)
+        return res
+    }
 
 
 

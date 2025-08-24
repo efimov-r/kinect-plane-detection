@@ -4,12 +4,14 @@ import era.utils.files.KiLogger
 import jdk.incubator.vector.FloatVector
 import jdk.incubator.vector.VectorMask
 import jdk.incubator.vector.VectorSpecies
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import utils.Threadripper.threadripp
 import vectors.Plane
+import vectors.Vector3Float
 import java.io.Serializable
 import kotlin.concurrent.thread
-import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sqrt
@@ -297,6 +299,8 @@ open class Cloud(initialCapacity: Int = 1000, val name: String = "") : Serializa
     fun getYFVB(species: VectorSpecies<Float>, index: Int) : FloatVector = FloatVector.broadcast(species, yArray[index])
     fun getZFVB(species: VectorSpecies<Float>, index: Int) : FloatVector = FloatVector.broadcast(species, zArray[index])
 
+    fun getVec(p: Int) = Vector3Float(xArray[p], yArray[p], zArray[p])
+
     fun minMaxDo() {
         if(minmaxRelevant) return
         for(i in 0 until sizeI) {
@@ -366,7 +370,6 @@ open class Cloud(initialCapacity: Int = 1000, val name: String = "") : Serializa
     }
 
     fun planeFromPoints(p1: Int, p2: Int, p3: Int): Plane? {
-        // Векторы
         val ux = xArray[p2] - xArray[p1]
         val uy = yArray[p2] - yArray[p1]
         val uz = zArray[p2] - zArray[p1]
@@ -375,17 +378,29 @@ open class Cloud(initialCapacity: Int = 1000, val name: String = "") : Serializa
         val vy = yArray[p3] - yArray[p1]
         val vz = zArray[p3] - zArray[p1]
 
-        // нормаль = u × v
-        val a = uy * vz - uz * vy
-        val b = uz * vx - ux * vz
-        val c = ux * vy - uy * vx
+        // скалярное произведение
+        val dot = ux * vx + uy * vy + uz * vz
+        val lenU = sqrt(ux*ux + uy*uy + uz*uz)
+        val lenV = sqrt(vx*vx + vy*vy + vz*vz)
 
-        val norm = sqrt(a * a + b * b + c * c)
-        if (norm < 1e-6f) return null // коллинеарные точки → плоскость не существует
+        if (lenU < 1e-6f || lenV < 1e-6f) return null // почти нулевой вектор
 
-        val md = a * xArray[p1] + b * yArray[p1] + c * zArray[p1]
-        val d = -1 * md
-        return Plane(a, b, c, d, p1, p2, p3)
+        val cosTheta = dot / (lenU * lenV)
+
+        // cos(30°) ≈ 0.866
+        if (cosTheta in -0.866f..0.866f) {
+            // нормаль = u × v
+            val a = uy * vz - uz * vy
+            val b = uz * vx - ux * vz
+            val c = ux * vy - uy * vx
+
+            val norm = sqrt(a * a + b * b + c * c)
+            if (norm < 1e-6f) return null
+
+            val d = -(a * xArray[p1] + b * yArray[p1] + c * zArray[p1])
+            return Plane(a, b, c, d, p1, p2, p3, cloud = this)
+        }
+        return null
     }
 
     fun distSquared(p1: Int, p2: Int) : Float {

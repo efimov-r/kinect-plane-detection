@@ -3,20 +3,20 @@ package vectors
 import kotlin.math.sqrt
 
 open class Vector3Float(var x: Float, var y: Float, var z: Float) {
-    infix fun plus(other: Vector3Float) = Vector3Float(
-        x + other.x,
-        y + other.y,
-        z + other.z)
-
-    infix fun minus(other: Vector3Float) = Vector3Float(
-        x - other.x,
-        y - other.y,
-        z - other.z)
-
-    infix fun times(scalar: Float) = Vector3Float(
-        x * scalar,
-        y * scalar,
-        z * scalar)
+//    infix fun plus(other: Vector3Float) = Vector3Float(
+//        x + other.x,
+//        y + other.y,
+//        z + other.z)
+//
+//    infix fun minus(other: Vector3Float) = Vector3Float(
+//        x - other.x,
+//        y - other.y,
+//        z - other.z)
+//
+//    infix fun times(scalar: Float) = Vector3Float(
+//        x * scalar,
+//        y * scalar,
+//        z * scalar)
 
     // Векторное произведение
     infix fun cross(other: Vector3Float): Vector3Float {
@@ -26,6 +26,10 @@ open class Vector3Float(var x: Float, var y: Float, var z: Float) {
             x * other.y - y * other.x
         )
     }
+
+    operator fun plus(o: Vector3Float) = Vector3Float(x+o.x, y+o.y, z+o.z)
+    operator fun minus(o: Vector3Float) = Vector3Float(x-o.x, y-o.y, z-o.z)
+    operator fun times(s: Float) = Vector3Float(x*s, y*s, z*s)
 
     fun normalize(): Vector3Float {
         val len = length()

@@ -7,6 +7,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import utils.Threadripper.threadripp
+import vectors.Plane
 import java.lang.Integer.max
 import kotlin.math.min
 
@@ -27,6 +28,43 @@ class PointBuffer(initialCapacity: Int = 10) : ViewBuffer(initialCapacity) {
                 data[j + 1] = cloud.getX(i) * multFor3D
                 data[j + 2] = cloud.getY(i) * multFor3D
                 data[j + 3] = color
+                i++
+                j += 4
+            }
+        }
+
+        sizeI = cloud.size * 4
+        updated()
+    }
+
+    suspend fun ofCloud(cloud: Cloud, planes: List<Plane>, multFor3D: Float, countOfThread: Int, eps: Float) = coroutineScope {
+        clear()
+
+        if (arraySize < cloud.size * 4) {
+            resize(cloud.size * 4)
+        }
+
+        threadripp(cloud.size, countOfThread) { start, end ->
+            var i = start
+            var j = start * 4
+
+            while (i < end) {
+                val x = cloud.getX(i)
+                val y = cloud.getY(i)
+                val z = cloud.getZ(i)
+
+
+                data[j]     = z * multFor3D
+                data[j + 1] = x * multFor3D
+                data[j + 2] = y * multFor3D
+
+                var incl = false
+                planes.forEach {
+                    if(it.isPointOnPlane(x, y, z, eps)) {
+                        incl = true
+                    }
+                }
+                data[j + 3] = if(incl) 0f else 1f
                 i++
                 j += 4
             }
