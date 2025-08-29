@@ -36,11 +36,17 @@ open class Vector3Float(var x: Float, var y: Float, var z: Float) {
         return if (len != 0.0) Vector3Float((x / len).toFloat(), (y / len).toFloat(), (z / len).toFloat()) else this
     }
 
+    fun normalized(): Vector3Float {
+        val len = sqrt((x * x + y * y + z * z).toDouble()).toFloat()
+        return if (len > 1e-6f) Vector3Float(x / len, y / len, z / len) else this
+    }
+
     // Вычисление длины вектора
     fun length(): Double = sqrt((x * x + y * y + z * z).toDouble())
 
     // Скалярное произведение двух векторов
-    fun dot(other: Vector3Float): Double = (x * other.x + y * other.y + z * other.z).toDouble()
+    infix fun dot(other: Vector3Float): Double = (x * other.x + y * other.y + z * other.z).toDouble()
+    infix fun dotF(other: Vector3Float): Float = x * other.x + y * other.y + z * other.z
 
     override fun toString(): String {
         return "Vector3(x=$x, y=$y, z=$z)"

@@ -6,18 +6,18 @@ import kotlin.math.abs
 import kotlin.math.sqrt
 
 data class Plane(
-    private val a: Float,
-    private val b: Float,
-    private val c: Float,
-    private val d: Float,
+    val a: Float, //todo to private
+    val b: Float,
+    val c: Float,
+    val d: Float,
     private val p1i: Int,
     private val p2i: Int,
     private val p3i: Int,
     private var norm: Float? = null,
-    private val cloud: Cloud
+    private var cloud: Cloud
 ) {
 
-    val points: HashSet<Int> = mutableSetOf<Int>() as HashSet<Int>
+    var points: HashSet<Int> = mutableSetOf<Int>() as HashSet<Int>
 
     private fun getNorm() : Float {
         if(norm == null) {
@@ -32,6 +32,17 @@ data class Plane(
     fun getP2() = cloud.getVec(p2i)
     fun getP3() = cloud.getVec(p3i)
     fun getPofCloud(p: Int) = cloud.getVec(p)
+
+    fun recloud(cloud: Cloud, eps: Float) {
+        this.cloud = cloud
+        points.clear()
+
+        this.cloud.forEachIndexed { x, y, z, i ->
+            if(isPointOnPlane(x, y, z, eps*2)) {
+                points.add(i)
+            }
+        }
+    }
 
     fun filterPointsByDistanceCircle(
         maxGap: Float, pointCenter: Int
@@ -143,8 +154,9 @@ data class Plane(
     }
 
     fun isPointOnPlane(x: Float, y: Float, z: Float, eps: Float): Boolean {
+        val epsNorm = eps * getNorm()
         val value = a * x + b * y + c * z + d
-        return abs(value) < eps
+        return abs(value) < epsNorm
     }
 
     fun isPointOnPlaneFast(index: Int): Boolean {

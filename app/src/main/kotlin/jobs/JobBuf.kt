@@ -40,9 +40,8 @@ object JobBuf {
 
                     channelText.send(ToViewText(text))
 
-                    val fastCloud = CloudOfSensorCompressor.compressHexadrupleRare(readCloud)
 
-                    create(fastCloud, writeCloud)
+                    create(readCloud, writeCloud)
 
 //                    val vectorP = doJobChank(fastCloud, writeCloud).await()
 //
