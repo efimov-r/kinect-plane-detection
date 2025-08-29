@@ -9,13 +9,12 @@ import era.app.utils.subclouders.CloudOfSensorCompressor
 import era.app.utils.subclouders.Voxeler
 import era.utils.count.Counter
 import era.utils.time.Span
+import jdk.incubator.vector.FloatVector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import vectors.Plane
-import vectors.PlanePoint
-import vectors.PlanePolygon
 import vectors.Vector3Float
 import java.util.concurrent.ThreadLocalRandom
 
@@ -33,6 +32,8 @@ object Plainer {
 
     val span = Span()
     val span2 = Span()
+    val span3 = Span()
+    val span4 = Span()
     val counter = Counter()
     val counter2 = Counter()
     val counter3 = Counter()
@@ -62,11 +63,13 @@ object Plainer {
 //            }
 //        }
 
-        planes.forEach { plane ->
-            plane.recloud(readCloud, EPS)
-        }
+        planes.map { plane ->
+            async {
+                plane.recloud(readCloud, EPS)
+            }
+        }.awaitAll()
 
-        val resCloud = Cloud(500000, "resCloudWithoutPoint")
+        val resCloud = Cloud(300_000, "resCloudWithoutPoint")
         readCloud.forEachIndexed { x, y, z, i ->
             var pointInPlain = false
             planes.forEach { plane ->
@@ -77,36 +80,19 @@ object Plainer {
             }
         }
 
-//        val planesPoint = planes.map { p->
-//            PlanePoint(p.a, p.b, p.c, p.d, ArrayList())
-//        }
-//
-//
-//        readCloud.forEach { x, y, z ->
-//            var pointInPlain = false
-//            planesPoint.forEach { pp->
-//                if(pp.isPointOnPlane(x, y, z, EPS*2)) {
-//                    pp.points.add(Vector3Float(x, y, z))
-//                    pointInPlain = true
-//                }
-//            }
-//            if(!pointInPlain) {
-//                resCloud.add(x, y, z)
-//            }
-//        }
-
         span2.resetTimer()
-        planes.map { pp->
-            async {
-                convexHullOnPlane3(pp)
-            }
-        }.awaitAll()
-
-//        val hal2 = planesPoint.map { pp->
+//        planes.map { pp->
 //            async {
-//                convexHullOnPlane(pp)
+//                convexHullOnPlane3(pp)
 //            }
 //        }.awaitAll()
+
+//        planes.map { pp->
+//                convexHullOnPlane3(pp)
+//        }
+
+        convexHullOnPlane3(planes[0])
+
         span2.middleCircle(100, "hull")
 
 
@@ -246,76 +232,19 @@ object Plainer {
     private val V1X = Vector3Float(1f, 0f, 0f)
 
     // проекция точек на (u,v) + оригинальные 3D координаты
-    data class P2D(val x: Float,
-                   val y: Float,
-                   val original: Vector3Float)
-
     data class P2Di(val x: Float,
                    val y: Float,
                    val original: Int)
 
     // кросс-продукт 2D
-    inline fun cross(o: P2D, a: P2D, b: P2D): Float {
-        return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x)
-    }
-
     inline fun cross(o: P2Di, a: P2Di, b: P2Di): Float {
         return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x)
     }
 
-    fun convexHullOnPlane2(
-        plane: Plane
-    ): PlanePolygon {
-        val normal = plane.getNormalize()
-
-        // базис u,v в плоскости
-        val tmp = if (kotlin.math.abs(normal.x) > 0.9f) V1Y else V1X
-
-        val u = (tmp cross normal).normalized()
-        val v = (normal cross u).normalized()
-
-        val points2D = ArrayList<P2D>(plane.points.size)
-        plane.points.forEach { po->
-            val p = plane.getPofCloud(po)
-            points2D.add(P2D((p dotF u), (p dotF v), p))
-        }
-
-        // сортировка (без compareBy для скорости)
-        points2D.sortWith { a, b ->
-            if (a.x == b.x) a.y.compareTo(b.y) else a.x.compareTo(b.x)
-        }
-
-        if (points2D.size <= 2) {
-            return PlanePolygon(plane.a, plane.b, plane.c, plane.d, points2D.map { it.original })
-        }
-
-        val lower = ArrayList<P2D>()
-        for (p in points2D) {
-            while (lower.size >= 2 && cross(lower[lower.size - 2], lower[lower.size - 1], p) <= 0f) {
-                lower.removeAt(lower.size - 1)
-            }
-            lower.add(p)
-        }
-
-        val upper = ArrayList<P2D>()
-        for (i in points2D.size - 1 downTo 0) {
-            while (upper.size >= 2 && cross(upper[upper.size - 2], upper[upper.size - 1], points2D[i]) <= 0f) {
-                upper.removeAt(upper.size - 1)
-            }
-            upper.add(points2D[i])
-        }
-
-        // итоговая оболочка
-        val hull = ArrayList<Vector3Float>(lower.size + upper.size - 2)
-        for (i in 0 until lower.size - 1) hull.add(lower[i].original)
-        for (i in 0 until upper.size - 1) hull.add(upper[i].original)
-
-        return PlanePolygon(plane.a, plane.b, plane.c, plane.d, hull)
-    }
-
-    fun convexHullOnPlane3(
+    suspend fun CoroutineScope.convexHullOnPlane3(
         plane: Plane
     ) {
+
         val normal = plane.getNormalize()
 
         // базис u,v в плоскости
@@ -323,96 +252,115 @@ object Plainer {
 
         val u = (tmp cross normal).normalized()
         val v = (normal cross u).normalized()
+        span4.resetTimer()
+//        val points2D = projectPointsSIMD(plane.cloud, plane.points.toIntArray(), u, v)
 
         val points2D = ArrayList<P2Di>(plane.points.size)
         plane.points.forEach { po->
             val p = plane.getPofCloud(po)
-            points2D.add(P2Di((p dotF u), (p dotF v), po))
+            points2D.add(P2Di((p dot u), (p dot v), po))
         }
-
+        span4.middleCircle(100, "hInt")
         // сортировка (без compareBy для скорости)
         points2D.sortWith { a, b ->
             if (a.x == b.x) a.y.compareTo(b.y) else a.x.compareTo(b.x)
         }
 
         if (points2D.size <= 2) {
-            plane.points = points2D.map { it.original }.toHashSet()
+            plane.points = points2D.map { it.original }.toMutableList()
             return
         }
 
-        val lower = ArrayList<P2Di>()
-        for (p in points2D) {
-            while (lower.size >= 2 && cross(lower[lower.size - 2], lower[lower.size - 1], p) <= 0f) {
-                lower.removeAt(lower.size - 1)
+
+        val j1 = async {
+//            span3.resetTimer()
+            val lower = ArrayList<P2Di>()
+            for (p in points2D) {
+                while (lower.size >= 2 && cross(lower[lower.size - 2], lower[lower.size - 1], p) <= 0f) {
+                    lower.removeAt(lower.size - 1)
+                }
+                lower.add(p)
             }
-            lower.add(p)
+//            span3.middleCircle(100, "lower")
+            return@async lower
         }
 
-        val upper = ArrayList<P2Di>()
-        for (i in points2D.size - 1 downTo 0) {
-            while (upper.size >= 2 && cross(upper[upper.size - 2], upper[upper.size - 1], points2D[i]) <= 0f) {
-                upper.removeAt(upper.size - 1)
+        val j2 = async {
+//            span4.resetTimer()
+            val upper = ArrayList<P2Di>()
+            for (i in points2D.size - 1 downTo 0) {
+                while (upper.size >= 2 && cross(upper[upper.size - 2], upper[upper.size - 1], points2D[i]) <= 0f) {
+                    upper.removeAt(upper.size - 1)
+                }
+                upper.add(points2D[i])
             }
-            upper.add(points2D[i])
+//            span4.middleCircle(100, "upper")
+            return@async upper
         }
+
+        val lower = j1.await()
+        val upper = j2.await()
 
         // итоговая оболочка
         val hull = ArrayList<Int>(lower.size + upper.size - 2)
         for (i in 0 until lower.size - 1) hull.add(lower[i].original)
         for (i in 0 until upper.size - 1) hull.add(upper[i].original)
-        plane.points = hull.toHashSet()
+        plane.points = hull
     }
 
-    fun convexHullOnPlane(plane: PlanePoint): PlanePolygon {
-        val normal = plane.getNormalize()
+    val SPECIES = FloatVector.SPECIES_PREFERRED
 
-        // базис u,v в плоскости
-        val tmp = if (kotlin.math.abs(normal.x) > 0.9f)
-            Vector3Float(0f, 1f, 0f)
-        else
-            Vector3Float(1f, 0f, 0f)
+    fun projectPointsSIMD(
+        cloud: Cloud,
+        indices: IntArray,
+        u: Vector3Float,
+        v: Vector3Float
+    ): ArrayList<P2Di> {
+        val res = ArrayList<P2Di>(indices.size)
 
-        val u = (tmp cross normal).normalized()
-        val v = (normal cross u).normalized()
+        val ux = u.x; val uy = u.y; val uz = u.z
+        val vx = v.x; val vy = v.y; val vz = v.z
 
+        // массивы координат точек
+        val xs = FloatArray(indices.size) { cloud.getX(indices[it]) }
+        val ys = FloatArray(indices.size) { cloud.getY(indices[it]) }
+        val zs = FloatArray(indices.size) { cloud.getZ(indices[it]) }
 
+        var i = 0
+        val upperBound = SPECIES.loopBound(indices.size) // кратная граница
 
-        val points2D = ArrayList<P2D>(plane.points.size)
-        for (p in plane.points) {
-            points2D.add(P2D((p dotF u), (p dotF v), p))
-        }
+        while (i < upperBound) {
+            // загружаем пачку координат
+            val X = FloatVector.fromArray(SPECIES, xs, i)
+            val Y = FloatVector.fromArray(SPECIES, ys, i)
+            val Z = FloatVector.fromArray(SPECIES, zs, i)
 
-        // сортировка (без compareBy для скорости)
-        points2D.sortWith { a, b ->
-            if (a.x == b.x) a.y.compareTo(b.y) else a.x.compareTo(b.x)
-        }
+            // проекции на базис (u, v)
+            val dotU = X.mul(ux).add(Y.mul(uy)).add(Z.mul(uz))
+            val dotV = X.mul(vx).add(Y.mul(vy)).add(Z.mul(vz))
 
-        if (points2D.size <= 2) {
-            return PlanePolygon(plane.a, plane.b, plane.c, plane.d, points2D.map { it.original })
-        }
+            // выгружаем во временные массивы
+            val arrU = FloatArray(SPECIES.length())
+            val arrV = FloatArray(SPECIES.length())
+            dotU.intoArray(arrU, 0)
+            dotV.intoArray(arrV, 0)
 
-        val lower = ArrayList<P2D>()
-        for (p in points2D) {
-            while (lower.size >= 2 && cross(lower[lower.size - 2], lower[lower.size - 1], p) <= 0f) {
-                lower.removeAt(lower.size - 1)
+            // сохраняем результаты с индексами
+            for (j in 0 until SPECIES.length()) {
+                res.add(P2Di(arrU[j], arrV[j], indices[i + j]))
             }
-            lower.add(p)
+
+            i += SPECIES.length()
         }
 
-        val upper = ArrayList<P2D>()
-        for (i in points2D.size - 1 downTo 0) {
-            val p = points2D[i]
-            while (upper.size >= 2 && cross(upper[upper.size - 2], upper[upper.size - 1], p) <= 0f) {
-                upper.removeAt(upper.size - 1)
-            }
-            upper.add(p)
+        // обрабатываем хвост (если элементов не хватает на полный вектор)
+        while (i < indices.size) {
+            val p = cloud.getVec(i)
+            res.add(P2Di((p dot u), (p dot v), i))
+            i++
         }
 
-        // итоговая оболочка
-        val hull = ArrayList<Vector3Float>(lower.size + upper.size - 2)
-        for (i in 0 until lower.size - 1) hull.add(lower[i].original)
-        for (i in 0 until upper.size - 1) hull.add(upper[i].original)
-
-        return PlanePolygon(plane.a, plane.b, plane.c, plane.d, hull)
+        return res
     }
+
 }

@@ -14,10 +14,10 @@ data class Plane(
     private val p2i: Int,
     private val p3i: Int,
     private var norm: Float? = null,
-    private var cloud: Cloud
+    var cloud: Cloud
 ) {
 
-    var points: HashSet<Int> = mutableSetOf<Int>() as HashSet<Int>
+    var points: MutableCollection<Int> = mutableSetOf<Int>() as HashSet<Int>
 
     private fun getNorm() : Float {
         if(norm == null) {
@@ -35,7 +35,7 @@ data class Plane(
 
     fun recloud(cloud: Cloud, eps: Float) {
         this.cloud = cloud
-        points.clear()
+        points = mutableSetOf<Int>()
 
         this.cloud.forEachIndexed { x, y, z, i ->
             if(isPointOnPlane(x, y, z, eps*2)) {
@@ -230,10 +230,10 @@ data class Plane(
             val rel = p - p0
             val pu = rel.dot(u)
             val pv = rel.dot(v)
-            if (pu < minU) minU = pu.toFloat()
-            if (pu > maxU) maxU = pu.toFloat()
-            if (pv < minV) minV = pv.toFloat()
-            if (pv > maxV) maxV = pv.toFloat()
+            if (pu < minU) minU = pu
+            if (pu > maxU) maxU = pu
+            if (pv < minV) minV = pv
+            if (pv > maxV) maxV = pv
         }
 
         return (maxU - minU)*(maxV - minV)

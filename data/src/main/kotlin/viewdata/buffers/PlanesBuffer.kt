@@ -1,7 +1,6 @@
 package viewdata.buffers
 
 import vectors.Plane
-import vectors.PlanePolygon
 import vectors.Vector3Float
 import java.lang.Integer.max
 
@@ -9,47 +8,6 @@ class PlanesBuffer(initialCap: Int) : ViewBuffer(initialCap) {
 
     companion object {
         private const val SIZE_SQUARE_PLANE = 2000f
-    }
-
-    fun ofPlainPolygon(planes: List<PlanePolygon>, color: Float, multFor3D: Float) {
-        clear()
-        planes.forEach { plane->
-            for(a in 0 until plane.vertices.size){
-                for(b in 0 until plane.vertices.size){
-                    for(c in 0 until plane.vertices.size){
-                        if(a!=b && b!=c && a!=c) {
-                            resizeForTriangle(1)
-                            writePoint(plane.vertices[a], color, multFor3D)
-                            writePoint(plane.vertices[b], color, multFor3D)
-                            writePoint(plane.vertices[c], color, multFor3D)
-                        }
-                    }
-                }
-            }
-        }
-        updated()
-    }
-
-    fun ofPlainPolygon2(planes: List<PlanePolygon>, color: Float, multFor3D: Float) {
-        clear()
-        for(f in 0 until planes.size) {
-            val poly = planes[f]
-            val cx = poly.vertices.map { it.x }.average().toFloat()
-            val cy = poly.vertices.map { it.y }.average().toFloat()
-            val cz = poly.vertices.map { it.z }.average().toFloat()
-            val center = Vector3Float(cx, cy, cz)
-
-            if (poly.vertices.size < 3) continue
-
-            for (i in poly.vertices.indices) {
-                val next = (i + 1) % poly.vertices.size
-                resizeForTriangle(1)
-                writePoint(center, color, multFor3D)
-                writePoint(poly.vertices[i], color, multFor3D)
-                writePoint(poly.vertices[next], color, multFor3D)
-            }
-        }
-        updated()
     }
 
     fun ofPlainPolygon3(planes: List<Plane>, color: Float, multFor3D: Float) {
