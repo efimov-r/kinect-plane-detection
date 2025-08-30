@@ -10,7 +10,29 @@ class PlanesBuffer(initialCap: Int) : ViewBuffer(initialCap) {
         private const val SIZE_SQUARE_PLANE = 2000f
     }
 
-    fun ofPlainPolygon3(planes: List<Plane>, color: Float, multFor3D: Float) {
+    fun addPlainPolygon(poly: Plane, color: Float, multFor3D: Float) {
+        if (poly.points.size < 3) return
+
+        // достаём координаты всех точек полигона
+        val coords = poly.points.map { poly.getPofCloud(it) }
+
+        // вычисляем геометрический центр (усреднение по координатам)
+        val cx = coords.map { it.x }.average().toFloat()
+        val cy = coords.map { it.y }.average().toFloat()
+        val cz = coords.map { it.z }.average().toFloat()
+        val center = Vector3Float(cx, cy, cz)
+
+        // триангуляция фаном вокруг центра
+        for (i in coords.indices) {
+            val next = (i + 1) % coords.size
+            resizeForTriangle(1)
+            writePoint(center, color, multFor3D)
+            writePoint(coords[i], color, multFor3D)
+            writePoint(coords[next], color, multFor3D)
+        }
+    }
+
+    fun ofPlainsPolygon(planes: List<Plane>, color: Float, multFor3D: Float) {
         clear()
         for (poly in planes) {
             if (poly.points.size < 3) continue

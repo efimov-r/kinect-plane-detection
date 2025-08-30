@@ -3,9 +3,14 @@ package era.app.jobs
 import bufferchanel.BufferedChannel
 import bufferchanel.databuffer.BufferedChannelForView
 import bufferchanel.databuffer.BufferedCloudOfSensor
+import era.app.AppConstants
 import era.app.jobs.Plainer.create
 import era.app.utils.subclouders.CloudOfSensorCompressor
+import era.utils.files.KiLogger
 import era.utils.time.Span
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import viewdata.transferdata.ToViewText
@@ -40,8 +45,12 @@ object JobBuf {
 
                     channelText.send(ToViewText(text))
 
+                    val planes = create(readCloud, writeCloud) //todo исключения
+                    writeCloud.planesData.ofPlainsPolygon(planes.planes, 1f, AppConstants.AD_MAX_MM_ON_V3D)
+                    writeCloud.pointData.ofCloud(planes.cloud, 0f, AppConstants.AD_MAX_MM_ON_V3D)
 
-                    create(readCloud, writeCloud)
+
+
 
 //                    val vectorP = doJobChank(fastCloud, writeCloud).await()
 //

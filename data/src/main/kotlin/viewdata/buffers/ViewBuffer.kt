@@ -26,7 +26,7 @@ open class ViewBuffer (initialCapacity: Int) {
 
     fun isUpdated(): Boolean = isUpdated
 
-    protected fun updated() {
+    fun updated() {
         isUpdated = true
     }
 

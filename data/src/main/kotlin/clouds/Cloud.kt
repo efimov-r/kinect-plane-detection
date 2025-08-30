@@ -8,6 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import utils.Threadripper.threadripp
+import vectors.P2D
 import vectors.Plane
 import vectors.Vector3Float
 import java.io.Serializable
@@ -409,4 +410,43 @@ open class Cloud(initialCapacity: Int = 1000, val name: String = "") : Serializa
         val dz = zArray[p1] - zArray[p2]
         return dx*dx + dy*dy + dz*dz
     }
+
+    fun cloneOfIndex(forCopy: List<Int>): Cloud {
+        val resCloud = Cloud(forCopy.size, "resCloudWithoutPoint")
+        var j = 0
+        for(i in forCopy) {
+            resCloud.xArray[j] = xArray[i]
+            resCloud.yArray[j] = yArray[i]
+            resCloud.zArray[j] = zArray[i]
+            j++
+        }
+        resCloud.sizeI = forCopy.size
+        return resCloud
+    }
+
+    fun cloneOfIndex(mask: BooleanArray): Cloud {
+        val resCloud = Cloud(200_000, "resCloudWithoutPoint")
+        if(mask.size != size) {
+            throw Exception("mask size error with clone cloud")
+        }
+        for(i in 0 until size) {
+            if(mask[i]) {
+                resCloud.add(
+                    xArray[i], yArray[i], zArray[i]
+                )
+            }
+        }
+        return resCloud
+    }
+
+    fun create2DPoints(u: Vector3Float, v: Vector3Float, indexes: Collection<Int>) : List<P2D> =
+        indexes.map{ i->
+            val x = xArray[i]
+            val y = yArray[i]
+            val z = zArray[i]
+            val newX = x*u.x + y*u.y + z*u.z
+            val newY = x*v.x + y*v.y + z*v.z
+            P2D(newX, newY, i)
+        }
+
 }

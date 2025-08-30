@@ -70,8 +70,8 @@ object Voxeler {
 
     val rnd = ThreadLocalRandom.current()
 
-    fun createVoxelsRandomFromHash(cloud: Cloud, hash: Hash, countOfThread: Int) : Cloud {
-        val mapHash = hash.getVoxelMap(50) //todo тут заменил на однопоток для стабильности
+    suspend fun createVoxelsRandomFromHash(cloud: Cloud, hash: Hash, countOfThread: Int) : Cloud {
+        val mapHash = hash.getVoxelMap(50, countOfThread)
 
         val indexs = ArrayList<Int>(mapHash.size)
         mapHash.forEach { (v, l) ->

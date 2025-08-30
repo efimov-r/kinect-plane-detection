@@ -4,32 +4,32 @@ package era.app.utils.subclouders
 import bufferchanel.databuffer.BufferedCloudOfSensor
 import clouds.Cloud
 import kotlinx.coroutines.*
+import utils.Threadripper.threadripp
 import kotlin.math.min
 
 object CloudOfSensorCompressor {
 
     //берет точку одну из 2*2 из центра поля 16*16, ненулевую если она есть в поле 2*2
-    suspend fun compressHexadrupleRare(inp: BufferedCloudOfSensor) : Cloud {
+    suspend fun CoroutineScope.compressHexadrupleRare(inp: BufferedCloudOfSensor, countOfThread: Int) : Cloud {
         val outSize = inp.size / 16
         val res = Cloud(outSize, "cloud/16")
         if(!inp.validate()) {
             return res
         }
 
-        val chunk = 1000 //todo to thread
-        coroutineScope {
-            val jobs = mutableListOf<Deferred<Cloud>>()
-            for (start in 0 until outSize step chunk) {
-                val end = min(start + chunk, outSize)
-                jobs += async(Dispatchers.Default) {
-                    return@async do16(inp, start, end)
-                }
-            }
-
-            for (cloud in jobs.awaitAll()) {
-                res.add(cloud)
+        val chunk = (outSize + countOfThread - 1) / countOfThread
+        val jobs = mutableListOf<Deferred<Cloud>>()
+        for (start in 0 until outSize step chunk) {
+            val end = min(start + chunk, outSize)
+            jobs += async(Dispatchers.Default) {
+                return@async do16(inp, start, end)
             }
         }
+
+        for (cloud in jobs.awaitAll()) {
+            res.add(cloud)
+        }
+
 
         return res
     }

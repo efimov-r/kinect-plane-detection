@@ -6,18 +6,19 @@ import kotlin.math.abs
 import kotlin.math.sqrt
 
 data class Plane(
-    val a: Float, //todo to private
-    val b: Float,
-    val c: Float,
-    val d: Float,
+    private val a: Float,
+    private val b: Float,
+    private val c: Float,
+    private val d: Float,
     private val p1i: Int,
     private val p2i: Int,
     private val p3i: Int,
     private var norm: Float? = null,
-    var cloud: Cloud
+    private var cloud: Cloud
 ) {
 
     var points: MutableCollection<Int> = mutableSetOf<Int>() as HashSet<Int>
+    var pointsWithSecondOrder: MutableCollection<Int> = mutableSetOf<Int>() as HashSet<Int>
 
     private fun getNorm() : Float {
         if(norm == null) {
@@ -35,11 +36,19 @@ data class Plane(
 
     fun recloud(cloud: Cloud, eps: Float) {
         this.cloud = cloud
-        points = mutableSetOf<Int>()
+        points = mutableSetOf()
+        pointsWithSecondOrder = mutableSetOf()
+
+        val epsNorm = eps * getNorm()
+        val epsNorm3 = epsNorm * 3
 
         this.cloud.forEachIndexed { x, y, z, i ->
-            if(isPointOnPlane(x, y, z, eps*2)) {
+            val len = abs(a * x + b * y + c * z + d)
+            if(len < epsNorm) {
                 points.add(i)
+                pointsWithSecondOrder.add(i)
+            } else if(len < epsNorm3) {
+                pointsWithSecondOrder.add(i)
             }
         }
     }
@@ -237,6 +246,18 @@ data class Plane(
         }
 
         return (maxU - minU)*(maxV - minV)
+    }
+
+    private val V1Y = Vector3Float(0f, 1f, 0f)
+    private val V1X = Vector3Float(1f, 0f, 0f)
+
+    fun get2DPoints() : List<P2D> {
+        val normal = getNormalize()
+        val tmp = if (abs(normal.x) > 0.9f) V1Y else V1X // базис u,v в плоскости
+        val u = (tmp cross normal).normalized()
+        val v = (normal cross u).normalized()
+
+        return cloud.create2DPoints(u, v, points)
     }
 
 }
