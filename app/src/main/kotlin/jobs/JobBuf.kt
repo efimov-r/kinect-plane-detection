@@ -4,6 +4,7 @@ import bufferchanel.BufferedChannel
 import bufferchanel.databuffer.BufferedChannelForView
 import bufferchanel.databuffer.BufferedCloudOfSensor
 import era.app.AppConstants
+import era.app.gpu.Inlaerser
 import era.app.jobs.Plainer.create
 import era.app.utils.subclouders.CloudOfSensorCompressor
 import era.utils.files.KiLogger
@@ -24,12 +25,13 @@ object JobBuf {
     suspend fun execute(
         formSensorChannel: BufferedChannel<BufferedCloudOfSensor>,
         toViewChannel: BufferedChannel<BufferedChannelForView>,
-        channelText: Channel<ToViewText>
+        channelText: Channel<ToViewText>,
+        inlaerser: Inlaerser
     ) {
         coroutineScope {
-            formSensorChannel.getFirstDataForRead()?.let { readCloud ->
+            formSensorChannel.getLastDataForRead()?.let { readCloud ->
                 toViewChannel.getDataForWriteOrRewriteOld()?.let { writeCloud ->
-                    span.resetTimer()
+//                    span.resetTimer()
 
 
                     writeCloud.cubeData.clear()
@@ -45,9 +47,15 @@ object JobBuf {
 
                     channelText.send(ToViewText(text))
 
-                    val planes = create(readCloud, writeCloud) //todo исключения
+                    val planes = create(readCloud, inlaerser) //todo исключения
                     writeCloud.planesData.ofPlainsPolygon(planes.planes, 1f, AppConstants.AD_MAX_MM_ON_V3D)
                     writeCloud.pointData.ofCloud(planes.cloud, 0f, AppConstants.AD_MAX_MM_ON_V3D)
+//                    val a = planes.planes.map { plane ->
+//                        plane.points.map { p->
+//                            plane.getVecCloud(p)
+//                        }
+//                    }.flatten()
+//                    writeCloud.cubeData.writeCubes(a, 1f,AppConstants.AD_MAX_MM_ON_V3D)
 
 
 
@@ -65,7 +73,7 @@ object JobBuf {
 //                    }
 //                        writeCloud.pointData.ofCloud(readCloud, 0f, AppConstants.AD_MAX_MM_ON_V3D, 10)
 //                    writeCloud.pointData.ofCloud(fastCloud, 0f, AppConstants.AD_MAX_MM_ON_V3D, 10)
-                    span.middleCircle(100, "All")
+//                    span.middleCircle(100, "All")
 //                    delay(30)
 
                     toViewChannel.endWrite(writeCloud)

@@ -7,12 +7,14 @@ import jdk.incubator.vector.VectorSpecies
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import utils.Threadripper.threadripp
+import org.jocl.CL
+import org.jocl.Pointer
+import org.jocl.Sizeof
+import org.jocl.cl_context
 import vectors.P2D
 import vectors.Plane
 import vectors.Vector3Float
 import java.io.Serializable
-import kotlin.concurrent.thread
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sqrt
@@ -158,51 +160,6 @@ open class Cloud(initialCapacity: Int = 1000, val name: String = "") : Serializa
         }
     }
 
-    fun transformSIMD(matrix: Array<FloatArray>) {
-        minmaxRelevant = false
-        val SPEC = FloatVector.SPECIES_PREFERRED
-        val len = SPEC.length()
-
-        var i = 0
-        while (i <= size - len) {
-            val vx = FloatVector.fromArray(SPEC, xArray, i)
-            val vy = FloatVector.fromArray(SPEC, yArray, i)
-            val vz = FloatVector.fromArray(SPEC, zArray, i)
-
-            // row 0
-            val rx = vx.mul(matrix[0][0])
-                .add(vy.mul(matrix[0][1]))
-                .add(vz.mul(matrix[0][2]))
-
-            // row 1
-            val ry = vx.mul(matrix[1][0])
-                .add(vy.mul(matrix[1][1]))
-                .add(vz.mul(matrix[1][2]))
-
-            // row 2
-            val rz = vx.mul(matrix[2][0])
-                .add(vy.mul(matrix[2][1]))
-                .add(vz.mul(matrix[2][2]))
-
-            rx.intoArray(xArray, i)
-            ry.intoArray(yArray, i)
-            rz.intoArray(zArray, i)
-
-            i += len
-        }
-
-        // хвост без SIMD
-        while (i < size) {
-            val x = xArray[i]
-            val y = yArray[i]
-            val z = zArray[i]
-            xArray[i] = (matrix[0][0] * x + matrix[0][1] * y + matrix[0][2] * z)
-            yArray[i] = (matrix[1][0] * x + matrix[1][1] * y + matrix[1][2] * z)
-            zArray[i] = (matrix[2][0] * x + matrix[2][1] * y + matrix[2][2] * z)
-            i++
-        }
-    }
-
     fun forEach(action: (x: Float, y: Float, z: Float) -> Unit) {
         for (i in 0 until size) {
             action(xArray[i], yArray[i], zArray[i])
@@ -215,68 +172,58 @@ open class Cloud(initialCapacity: Int = 1000, val name: String = "") : Serializa
         }
     }
 
+    val SPECIES: VectorSpecies<Float> = FloatVector.SPECIES_PREFERRED
+
+//    fun forEachAddPointToPlaneSimd(
+//        a: Float, b: Float, c: Float, d: Float,
+//        plane: Plane,
+//        epsNorm: Float,
+//        epsNormSec: Float
+//    ) {
+//        var i = 0
+//        val upperBound = SPECIES.loopBound(size)
+//
+//        while (i < size) {
+//            if(i < upperBound) {
+//                val xv = FloatVector.fromArray(SPECIES, xArray, i)
+//                val yv = FloatVector.fromArray(SPECIES, yArray, i)
+//                val zv = FloatVector.fromArray(SPECIES, zArray, i)
+//
+//                var res = xv.mul(a).add(yv.mul(b)).add(zv.mul(c)).add(d)
+//                res = res.abs()
+//
+//                val lenArray = FloatArray(SPECIES.length())
+//                res.intoArray(lenArray, 0)
+//
+//                // проверка условий по каждому элементу в векторе
+//                for (j in 0 until SPECIES.length()) {
+//                    val idx = i + j
+//                    val len = lenArray[j]
+//                    if (len < epsNorm) {
+//                        plane.points.add(idx)
+//                        plane.pointsWithSecondOrder.add(idx)
+//                    } else if (len < epsNormSec) {
+//                        plane.pointsWithSecondOrder.add(idx)
+//                    }
+//                }
+//                i += SPECIES.length()
+//            } else {
+//                val len = abs(a * xArray[i] + b * yArray[i] + c * zArray[i] + d)
+//                if (len < epsNorm) {
+//                    plane.points.add(i)
+//                    plane.pointsWithSecondOrder.add(i)
+//                } else if (len < epsNormSec) {
+//                    plane.pointsWithSecondOrder.add(i)
+//                }
+//                i++
+//            }
+//        }
+//    }
+
     fun forEachIndexed(action: (x: Float, i: Int) -> Unit) {
         for (i in 0 until size) {
             action(xArray[i], i)
         }
-    }
-
-    fun forEach(
-        trX: (x: Float, y: Float, z: Float) -> Float,
-        trY: (x: Float, y: Float, z: Float) -> Float,
-        trZ: (x: Float, y: Float, z: Float) -> Float
-    ) {
-        minmaxRelevant = false
-        var vrX: Float
-        var vrY: Float
-        var vrZ: Float
-        for (i in 0 until size) {
-            vrX = trX(xArray[i], yArray[i], zArray[i])
-            vrY = trY(xArray[i], yArray[i], zArray[i])
-            vrZ = trZ(xArray[i], yArray[i], zArray[i])
-            xArray[i] = vrX
-            yArray[i] = vrY
-            zArray[i] = vrZ
-        }
-    }
-
-    suspend fun forEach(
-        trX: (x: Float, y: Float, z: Float) -> Float,
-        trY: (x: Float, y: Float, z: Float) -> Float,
-        trZ: (x: Float, y: Float, z: Float) -> Float,
-        countOfThread: Int) = coroutineScope {
-        minmaxRelevant = false
-
-        threadripp(size, countOfThread) { start, end ->
-            var i = start
-            var vrX: Float
-            var vrY: Float
-            var vrZ: Float
-            while (i < end) {
-                vrX = trX(xArray[i], yArray[i], zArray[i])
-                vrY = trY(xArray[i], yArray[i], zArray[i])
-                vrZ = trZ(xArray[i], yArray[i], zArray[i])
-                xArray[i] = vrX
-                yArray[i] = vrY
-                zArray[i] = vrZ
-                i++
-            }
-        }
-    }
-
-    fun parallelForEach(chunkSize: Int = 1000, action: (x: Float, y: Float, z: Float) -> Unit) {
-        val threads = Runtime.getRuntime().availableProcessors()
-        val chunk = (size) / threads + 1
-
-        List(threads) { threadIndex -> //todo to coroutines
-            thread {
-                val from = threadIndex * chunk
-                val to = minOf((size), from + chunk)
-                for (i in from until to) {
-                    action(xArray[i], yArray[i], zArray[i])
-                }
-            }
-        }.forEach { it.join() }
     }
 
     fun clear() {
@@ -301,6 +248,16 @@ open class Cloud(initialCapacity: Int = 1000, val name: String = "") : Serializa
     fun getZFVB(species: VectorSpecies<Float>, index: Int) : FloatVector = FloatVector.broadcast(species, zArray[index])
 
     fun getVec(p: Int) = Vector3Float(xArray[p], yArray[p], zArray[p])
+
+    fun getXMem(context: cl_context?) = CL.clCreateBuffer(context,
+        CL.CL_MEM_READ_ONLY or CL.CL_MEM_COPY_HOST_PTR,
+        Sizeof.cl_float * size.toLong(), Pointer.to(xArray), null)
+    fun getYMem(context: cl_context?) = CL.clCreateBuffer(context,
+        CL.CL_MEM_READ_ONLY or CL.CL_MEM_COPY_HOST_PTR,
+        Sizeof.cl_float * size.toLong(), Pointer.to(yArray), null)
+    fun getZMem(context: cl_context?) = CL.clCreateBuffer(context,
+        CL.CL_MEM_READ_ONLY or CL.CL_MEM_COPY_HOST_PTR,
+        Sizeof.cl_float * size.toLong(), Pointer.to(zArray), null)
 
     fun minMaxDo() {
         if(minmaxRelevant) return
@@ -425,7 +382,7 @@ open class Cloud(initialCapacity: Int = 1000, val name: String = "") : Serializa
     }
 
     fun cloneOfIndex(mask: BooleanArray): Cloud {
-        val resCloud = Cloud(200_000, "resCloudWithoutPoint")
+        val resCloud = Cloud(400_000, "resCloudWithoutPoint")
         if(mask.size != size) {
             throw Exception("mask size error with clone cloud")
         }
@@ -439,14 +396,35 @@ open class Cloud(initialCapacity: Int = 1000, val name: String = "") : Serializa
         return resCloud
     }
 
-    fun create2DPoints(u: Vector3Float, v: Vector3Float, indexes: Collection<Int>) : List<P2D> =
-        indexes.map{ i->
+    fun create2DPoints(u: Vector3Float, v: Vector3Float, indexes: IntArray) : MutableList<P2D> {
+        val res = indexes.map { i ->
             val x = xArray[i]
             val y = yArray[i]
             val z = zArray[i]
-            val newX = x*u.x + y*u.y + z*u.z
-            val newY = x*v.x + y*v.y + z*v.z
+            val newX = x * u.x + y * u.y + z * u.z
+            val newY = x * v.x + y * v.y + z * v.z
             P2D(newX, newY, i)
+        }.toMutableList()
+
+        if(res.size > 2) {
+            res.sortWith { a, b ->
+                if (a.x == b.x) a.y.compareTo(b.y) else a.x.compareTo(b.x)
+            }
         }
 
+        return res
+    }
+
+    fun recreateWithoutNull() : Cloud {
+        val res = Cloud(size, name)
+        for (i in 0 until size) {
+            if(zArray[i] != 0f) {
+                res.xArray[res.sizeI] = xArray[i]
+                res.yArray[res.sizeI] = yArray[i]
+                res.zArray[res.sizeI] = zArray[i]
+                res.sizeI++
+            }
+        }
+        return res
+    }
 }

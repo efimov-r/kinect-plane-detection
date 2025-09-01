@@ -3,6 +3,7 @@ package era.app
 import bufferchanel.BufferedChannel
 import bufferchanel.databuffer.BufferedChannelForView
 import bufferchanel.databuffer.BufferedCloudOfSensor
+import era.app.gpu.Inlaerser
 import era.app.jobs.JobBuf
 import era.utils.files.KiLogger
 import keyboard.Keys
@@ -36,12 +37,15 @@ fun main() {
 
     var state = State.DO_JOB
 
+    val inlaerser = Inlaerser()
+    inlaerser.init()
+
     runBlocking {
         launch(Dispatchers.IO){
             while(true) {
                 when(state) {
                     State.DO_JOB -> {
-                        JobBuf.execute(formSensorChannel, toViewChannel, channelText)
+                        JobBuf.execute(formSensorChannel, toViewChannel, channelText, inlaerser)
                     }
                     State.SAVE -> {
                         delay(100)

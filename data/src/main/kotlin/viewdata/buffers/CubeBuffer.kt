@@ -15,7 +15,13 @@ class CubeBuffer(initialCapasity: Int = 10) : ViewBuffer(initialCapasity) {
         updated()
     }
 
-    fun writeCubes(vectors: MutableList<Vector3Childed>, multFor3D: Float) {
+    fun writeCubes(vectors: List<Vector3Float>, color:Float, multFor3D: Float) {
+        vectors.forEach { vectors ->
+            writeCube(vectors, color, multFor3D)
+        }
+    }
+
+    fun writeCubes(vectors: List<Vector3Childed>, multFor3D: Float) {
         var v: Vector3Childed? = null
         vectors.forEach{
             if(it.vecs.size > 0) {

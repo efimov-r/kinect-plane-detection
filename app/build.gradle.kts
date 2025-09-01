@@ -20,6 +20,10 @@ dependencies {
     implementation(project(":io"))
     implementation(project(":data"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+
+    implementation(files("lib/jocl-2.0.4.jar"))
+    implementation(files("lib/jocl-blast-1.5.0.jar"))
+    implementation(files("lib/protobuf-java-4.28.1.jar"))
 }
 
 application {

@@ -34,7 +34,7 @@ object CloudOfSensorCompressor {
         return res
     }
 
-    private fun do16(inp: BufferedCloudOfSensor, at: Int, to: Int): Cloud {
+    private inline fun do16(inp: BufferedCloudOfSensor, at: Int, to: Int): Cloud {
         val res = Cloud(inp.size / 16, "cloud/16")
         val gg = inp.width/4
         var v : Float
