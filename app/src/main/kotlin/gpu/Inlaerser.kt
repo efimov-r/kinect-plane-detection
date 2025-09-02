@@ -1,7 +1,6 @@
 package era.app.gpu
 
 import clouds.Cloud
-import era.utils.time.Span
 import org.jocl.*
 import vectors.P2D
 import vectors.Vector3Float
@@ -112,95 +111,45 @@ class Inlaerser {
 
     /** ---------------- Загрузка или обновление облака ---------------- */
     fun uploadCloud(cloud: Cloud) {
-        val size = cloud.size
-
-        // Если уже существует -> освободить старое
         clouds[cloud.name]?.let { releaseCloud(it) }
-
-        // Создаём новые буферы
-        val xMem = cloud.getXMem(context)
-        val yMem = cloud.getYMem(context)
-        val zMem = cloud.getZMem(context)
-
-        clouds[cloud.name] = CloudBuffers(size, xMem, yMem, zMem,)
+        clouds[cloud.name] = CloudBuffers(cloud.size,
+            cloud.getXMem(context),
+            cloud.getYMem(context),
+            cloud.getZMem(context))
     }
+
+    private fun getDevice() = devices?.let { it[deviceIndex!!]!! }
+    private fun getCloud(name: String) = clouds[name] ?: error("Cloud $name not found")
 
     /** ---------------- Запуск ядра ---------------- */
     fun runKernel(name: String,
                   a: Float, b: Float, c: Float, d: Float,
                   epsNorm: Float, epsNormSec: Float): Pair<IntArray, IntArray> {
-        val device = devices?.let { it[deviceIndex!!]!! }
-        val cloud = clouds[name] ?: error("Cloud $name not found")
-        // Для каждого потока создаём СВОЙ queue
-        val queue = CL.clCreateCommandQueue(context, device, 0, null)
+        val kh = KernelHelper(context!!, program!!, getDevice()!!, "addPointsToPlane")
 
-        // И свой kernel (чтобы не гоняться за setKernelArg)
-        val kernel = CL.clCreateKernel(program, "addPointsToPlane", null)
+        kh.setKernelArgMem(getCloud(name).xMem)
+        kh.setKernelArgMem(getCloud(name).yMem)
+        kh.setKernelArgMem(getCloud(name).zMem)
+        kh.setKernelFloatArg(a)
+        kh.setKernelFloatArg(b)
+        kh.setKernelFloatArg(c)
+        kh.setKernelFloatArg(d)
+        kh.setKernelFloatArg(epsNorm)
+        kh.setKernelFloatArg(epsNormSec)
+        val pointsMem = kh.setKernelIntarrArgWriteOnly(getCloud(name).size)
+        val pointsSecondMem = kh.setKernelIntarrArgWriteOnly(getCloud(name).size)
+        val counterPointsMem = kh.setKernelIntArgReadWrite(0)
+        val counterSecondMem = kh.setKernelIntArgReadWrite(0)
+        kh.setKernelIntArg(getCloud(name).size)
 
+        kh.runKernel(getCloud(name).size)
 
-        val pointsMem = CL.clCreateBuffer(context,
-            CL.CL_MEM_WRITE_ONLY,
-            Sizeof.cl_int * cloud.size.toLong(), null, null)
+        val counterPoints = kh.getInt(counterPointsMem)
+        val counterSecond = kh.getInt(counterSecondMem)
+        val points = kh.getIntArr(pointsMem, counterPoints)
+        val pointsSecond = kh.getIntArr(pointsSecondMem, counterSecond)
 
-        val pointsSecondMem = CL.clCreateBuffer(context,
-            CL.CL_MEM_WRITE_ONLY,
-            Sizeof.cl_int * cloud.size.toLong(), null, null)
-
-        val counterPointsMem = CL.clCreateBuffer(context,
-            CL.CL_MEM_READ_WRITE,
-            Sizeof.cl_int.toLong(), null, null)
-
-        val counterSecondMem = CL.clCreateBuffer(context,
-            CL.CL_MEM_READ_WRITE,
-            Sizeof.cl_int.toLong(), null, null)
-
-        // Обнулить счётчики
-        val zero = intArrayOf(0)
-        CL.clEnqueueWriteBuffer(queue, counterPointsMem, true, 0, Sizeof.cl_int.toLong(), Pointer.to(zero), 0, null, null)
-        CL.clEnqueueWriteBuffer(queue, counterSecondMem, true, 0, Sizeof.cl_int.toLong(), Pointer.to(zero), 0, null, null)
-
-        // Аргументы ядра
-        var arg = 0
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_mem.toLong(), Pointer.to(cloud.xMem))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_mem.toLong(), Pointer.to(cloud.yMem))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_mem.toLong(), Pointer.to(cloud.zMem))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_float.toLong(), Pointer.to(floatArrayOf(a)))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_float.toLong(), Pointer.to(floatArrayOf(b)))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_float.toLong(), Pointer.to(floatArrayOf(c)))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_float.toLong(), Pointer.to(floatArrayOf(d)))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_float.toLong(), Pointer.to(floatArrayOf(epsNorm)))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_float.toLong(), Pointer.to(floatArrayOf(epsNormSec)))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_mem.toLong(), Pointer.to(pointsMem))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_mem.toLong(), Pointer.to(pointsSecondMem))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_mem.toLong(), Pointer.to(counterPointsMem))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_mem.toLong(), Pointer.to(counterSecondMem))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_int.toLong(), Pointer.to(intArrayOf(cloud.size)))
-
-        // Запуск (каждый поток гоняет свой NDRange)
-        val globalWorkSize = longArrayOf(cloud.size.toLong())
-        CL.clEnqueueNDRangeKernel(queue, kernel, 1, null, globalWorkSize, null, 0, null, null)
-        CL.clFinish(queue)
-
-        // Считывание счётчиков
-        val counterPoints = IntArray(1)
-        val counterSecond = IntArray(1)
-        CL.clEnqueueReadBuffer(queue, counterPointsMem, true, 0, Sizeof.cl_int.toLong(), Pointer.to(counterPoints), 0, null, null)
-        CL.clEnqueueReadBuffer(queue, counterSecondMem, true, 0, Sizeof.cl_int.toLong(), Pointer.to(counterSecond), 0, null, null)
-
-        // Считывание результатов
-        val points = IntArray(counterPoints[0])
-        val pointsSecond = IntArray(counterSecond[0])
-        CL.clEnqueueReadBuffer(queue, pointsMem, true, 0, Sizeof.cl_int * points.size.toLong(), Pointer.to(points), 0, null, null)
-        CL.clEnqueueReadBuffer(queue, pointsSecondMem, true, 0, Sizeof.cl_int * pointsSecond.size.toLong(), Pointer.to(pointsSecond), 0, null, null)
-
-        // Чистим ресурсы этого потока
-        CL.clReleaseKernel(kernel)
-        CL.clReleaseCommandQueue(queue)
-
-        CL.clReleaseMemObject(pointsMem)
-        CL.clReleaseMemObject(pointsSecondMem)
-        CL.clReleaseMemObject(counterPointsMem)
-        CL.clReleaseMemObject(counterSecondMem)
+        kh.release()
 
         return points to pointsSecond
     }
@@ -209,64 +158,30 @@ class Inlaerser {
                    indexes: IntArray,
                    u: Vector3Float,
                    v: Vector3Float): MutableList<P2D> {
-        val n = indexes.size
-        val device = devices?.let { it[deviceIndex!!]!! }
-        val cloud = clouds[name] ?: error("Cloud $name not found")
-        // Для каждого потока создаём СВОЙ queue
-        val queue = CL.clCreateCommandQueue(context, device, 0, null)
+        val kh = KernelHelper(context!!, program2!!, getDevice()!!, "projectPointsIndexed")
 
-        // И свой kernel (чтобы не гоняться за setKernelArg)
-        val kernel = CL.clCreateKernel(program2, "projectPointsIndexed", null)
+        kh.setKernelArgMem(getCloud(name).xMem)
+        kh.setKernelArgMem(getCloud(name).yMem)
+        kh.setKernelArgMem(getCloud(name).zMem)
+        kh.setKernelIntarrCopy(indexes)
+        kh.setKernelIntArg(indexes.size)
+        kh.setKernelFloatArg(u.x)
+        kh.setKernelFloatArg(u.y)
+        kh.setKernelFloatArg(u.z)
+        kh.setKernelFloatArg(v.x)
+        kh.setKernelFloatArg(v.y)
+        kh.setKernelFloatArg(v.z)
+        val outXMem = kh.setKernelFloatarrArgWriteOnly(indexes.size)
+        val outYMem = kh.setKernelFloatarrArgWriteOnly(indexes.size)
+        val outIdxMem = kh.setKernelIntarrArgWriteOnly(indexes.size)
 
-        // Буфер индексов
-        val idxMem = CL.clCreateBuffer(context, CL.CL_MEM_READ_ONLY or CL.CL_MEM_COPY_HOST_PTR,
-            Sizeof.cl_int * n.toLong(), Pointer.to(indexes), null)
+        kh.runKernel(indexes.size)
 
-        val outXMem = CL.clCreateBuffer(context, CL.CL_MEM_WRITE_ONLY,
-            Sizeof.cl_float * indexes.size.toLong(), null, null)
-        val outYMem = CL.clCreateBuffer(context, CL.CL_MEM_WRITE_ONLY,
-            Sizeof.cl_float * indexes.size.toLong(), null, null)
-        val outIdxMem = CL.clCreateBuffer(context, CL.CL_MEM_WRITE_ONLY,
-            Sizeof.cl_int * indexes.size.toLong(), null, null)
+        val outX = kh.getFloatArr(outXMem, indexes.size)
+        val outY = kh.getFloatArr(outYMem, indexes.size)
+        val outIdx = kh.getIntArr(outIdxMem, indexes.size)
 
-        // Аргументы ядра
-        var arg = 0
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_mem.toLong(), Pointer.to(cloud.xMem))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_mem.toLong(), Pointer.to(cloud.yMem))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_mem.toLong(), Pointer.to(cloud.zMem))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_mem.toLong(), Pointer.to(idxMem))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_int.toLong(), Pointer.to(intArrayOf(n)))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_float.toLong(), Pointer.to(floatArrayOf(u.x)))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_float.toLong(), Pointer.to(floatArrayOf(u.y)))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_float.toLong(), Pointer.to(floatArrayOf(u.z)))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_float.toLong(), Pointer.to(floatArrayOf(v.x)))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_float.toLong(), Pointer.to(floatArrayOf(v.y)))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_float.toLong(), Pointer.to(floatArrayOf(v.z)))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_mem.toLong(), Pointer.to(outXMem))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_mem.toLong(), Pointer.to(outYMem))
-        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_mem.toLong(), Pointer.to(outIdxMem))
-
-        // Запуск (каждый поток гоняет свой NDRange)
-        val globalWorkSize = longArrayOf(indexes.size.toLong())
-        CL.clEnqueueNDRangeKernel(queue, kernel, 1, null, globalWorkSize, null, 0, null, null)
-        CL.clFinish(queue)
-
-        // Читаем результат
-        val outX = FloatArray(indexes.size)
-        val outY = FloatArray(indexes.size)
-        val outIdx = IntArray(indexes.size)
-        CL.clEnqueueReadBuffer(queue, outXMem, true, 0, Sizeof.cl_float * indexes.size.toLong(), Pointer.to(outX), 0, null, null)
-        CL.clEnqueueReadBuffer(queue, outYMem, true, 0, Sizeof.cl_float * indexes.size.toLong(), Pointer.to(outY), 0, null, null)
-        CL.clEnqueueReadBuffer(queue, outIdxMem, true, 0, Sizeof.cl_int * indexes.size.toLong(), Pointer.to(outIdx), 0, null, null)
-
-        // Освобождаем ресурсы
-        CL.clReleaseMemObject(idxMem)
-        CL.clReleaseMemObject(outXMem)
-        CL.clReleaseMemObject(outYMem)
-        CL.clReleaseMemObject(outIdxMem)
-        CL.clReleaseKernel(kernel)
-        CL.clReleaseCommandQueue(queue)
-
+        kh.release()
 
         return MutableList(indexes.size) { i -> P2D(outX[i], outY[i], outIdx[i]) }
     }
