@@ -52,9 +52,10 @@ object Plainer {
         span3.resetTimer()
 
         val loadGpu = async {
-            GpuCloud(Gpu.getContext(), readCloud)
+            GpuCloud().loadCloud(Gpu.getContext(), readCloud)
         }
 
+        span.resetTimer()
         val fastCloud = compressHexadrupleRare(readCloud, COTH_CREATE_HASH)
         if(fastCloud.size < 100) {
             return@async PlainerResult(readCloud, emptyList())
@@ -65,6 +66,7 @@ object Plainer {
         if(voxelCloud.size < 10) {
             return@async PlainerResult(readCloud, emptyList())
         }
+        span.middleCircle(100, "fast")
 
 
         val planes = findPlanesDeterministic(voxelCloud)

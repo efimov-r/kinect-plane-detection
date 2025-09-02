@@ -1,25 +1,51 @@
 package clouds
 
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import org.jocl.CL
 import org.jocl.cl_context
 import org.jocl.cl_mem
 
 class GpuCloud {
+    private var sizeI: Int? = null
     val size: Int
-    val xMem: cl_mem
-    val yMem: cl_mem
-    val zMem: cl_mem
+        get() = sizeI!!
 
-    constructor(context: cl_context, cloud: Cloud) {
-        this.size = cloud.size
-        this.xMem = cloud.getXMem(context) //todo грузить многопоточно
-        this.yMem = cloud.getYMem(context)
-        this.zMem = cloud.getZMem(context)
+    private var xMemI: cl_mem? = null
+    val xMem: cl_mem
+        get() = xMemI!!
+
+    private var yMemI: cl_mem? = null
+    val yMem: cl_mem
+        get() = yMemI!!
+
+    private var zMemI: cl_mem? = null
+    val zMem: cl_mem
+        get() = zMemI!!
+
+    suspend fun loadCloud(context: cl_context, cloud: Cloud) : GpuCloud{
+        coroutineScope {
+            sizeI = cloud.size
+            listOf(
+                launch {
+                    xMemI = cloud.getXMem(context)
+                },
+                launch {
+                    yMemI = cloud.getYMem(context)
+                },
+                launch {
+                    zMemI = cloud.getZMem(context)
+                }
+            ).joinAll()
+        }
+
+        return this
     }
 
     fun releaseCloud() {
-        CL.clReleaseMemObject(xMem)
-        CL.clReleaseMemObject(yMem)
-        CL.clReleaseMemObject(zMem)
+        CL.clReleaseMemObject(xMemI)
+        CL.clReleaseMemObject(yMemI)
+        CL.clReleaseMemObject(zMemI)
     }
 }
