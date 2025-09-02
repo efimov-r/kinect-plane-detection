@@ -3,7 +3,9 @@ package era.app
 import bufferchanel.BufferedChannel
 import bufferchanel.databuffer.BufferedChannelForView
 import bufferchanel.databuffer.BufferedCloudOfSensor
-import era.app.gpu.Inlaerser
+import era.app.gpu.Gpu
+import era.app.gpu.JoclAddPointsToPlane
+import era.app.gpu.JoclProjectPointsIndexed
 import era.app.jobs.JobBuf
 import era.utils.files.KiLogger
 import keyboard.Keys
@@ -14,9 +16,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import sensors.cams.file.CloudSerializer
 import sensors.cams.kinect.Kinect
-import viewdata.transferdata.ToViewText
 import sensors.cams.kinect.KinectConstant.KINECT_DEPTH_COLS
 import sensors.cams.kinect.KinectConstant.KINECT_DEPTH_ROWS
+import viewdata.transferdata.ToViewText
 
 fun main() {
     KiLogger.inf("main start")
@@ -37,15 +39,16 @@ fun main() {
 
     var state = State.DO_JOB
 
-    val inlaerser = Inlaerser()
-    inlaerser.init()
+    val gpuContext = Gpu.init()
+    JoclAddPointsToPlane.init(gpuContext)
+    JoclProjectPointsIndexed.init(gpuContext)
 
     runBlocking {
         launch(Dispatchers.IO){
             while(true) {
                 when(state) {
                     State.DO_JOB -> {
-                        JobBuf.execute(formSensorChannel, toViewChannel, channelText, inlaerser)
+                        JobBuf.execute(formSensorChannel, toViewChannel, channelText)
                     }
                     State.SAVE -> {
                         delay(100)

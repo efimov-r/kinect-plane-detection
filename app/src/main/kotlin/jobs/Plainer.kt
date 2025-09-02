@@ -2,8 +2,11 @@ package era.app.jobs
 
 import bufferchanel.databuffer.BufferedCloudOfSensor
 import clouds.Cloud
+import clouds.GpuCloud
 import clouds.Hash
-import era.app.gpu.Inlaerser
+import era.app.gpu.Gpu
+import era.app.gpu.JoclAddPointsToPlane
+import era.app.gpu.JoclProjectPointsIndexed
 import era.app.utils.subclouders.CloudOfSensorCompressor.compressHexadrupleRare
 import era.app.utils.subclouders.Voxeler
 import era.utils.time.Span
@@ -13,7 +16,6 @@ import kotlinx.coroutines.sync.withLock
 import vectors.P2D
 import vectors.Plane
 import java.util.concurrent.ThreadLocalRandom
-import kotlin.collections.sortWith
 import kotlin.math.abs
 
 object Plainer {
@@ -42,15 +44,15 @@ object Plainer {
     )
 
     suspend fun CoroutineScope.create(
-        readCloud: BufferedCloudOfSensor, inlaerser: Inlaerser
+        readCloud: BufferedCloudOfSensor
     ) = async (Dispatchers.Default) {
         if(readCloud.size < 10_000) {
             return@async PlainerResult(readCloud, emptyList())
         }
         span3.resetTimer()
 
-        val loadGpu = launch {
-            inlaerser.uploadCloud(readCloud)
+        val loadGpu = async {
+            GpuCloud(Gpu.getContext(), readCloud)
         }
 
         val fastCloud = compressHexadrupleRare(readCloud, COTH_CREATE_HASH)
@@ -66,7 +68,7 @@ object Plainer {
 
 
         val planes = findPlanesDeterministic(voxelCloud)
-        loadGpu.join()
+        val gpuCloud = loadGpu.await()
         span4.resetTimer()
 
         val mask = BooleanArray(readCloud.size) { true }
@@ -98,8 +100,10 @@ object Plainer {
             async {
                 plane.recloud(readCloud, EPS, EPS*3)
                 val planeNorm = plane.getNorm()
-                val res = inlaerser.runKernel(readCloud.name, plane.a, plane.b, plane.c, plane.d,
+                val res = JoclAddPointsToPlane.runKernel(Gpu.getDevice(), gpuCloud, plane.a, plane.b, plane.c, plane.d,
                     EPS * planeNorm, EPS*3 * planeNorm)
+//                val res = inlaerser.runKernel(readCloud.name, plane.a, plane.b, plane.c, plane.d,
+//                    EPS * planeNorm, EPS*3 * planeNorm)
                 plane.points = res.first
                 plane.pointsWithSecondOrder = res.second
                 return@async plane
@@ -109,7 +113,7 @@ object Plainer {
         val hullJobs = recloudJobs.map { job ->
             async {
                 val plane = job.await()
-                convexHullOnPlane(plane, inlaerser)
+                convexHullOnPlane(plane, gpuCloud)
                 return@async plane
             }
         }
@@ -134,6 +138,7 @@ object Plainer {
         span4.middleCircle(100, "koro")
         span3.middleCircle(100, "all do")
 
+        gpuCloud.releaseCloud()
         return@async PlainerResult(resCloud, plRes)
     }.await()
 
@@ -335,11 +340,11 @@ object Plainer {
     }
 
     suspend fun CoroutineScope.convexHullOnPlane(
-        plane: Plane, inlaerser: Inlaerser
+        plane: Plane, gpuCloud: GpuCloud
     ) {
         val uAndV = plane.getUandV()
 //        val points2D = plane.get2DPoints()
-        val points2D = inlaerser.runKernel2(plane.getName(), plane.points, uAndV.first, uAndV.second)
+        val points2D = JoclProjectPointsIndexed.runKernel(Gpu.getDevice(), gpuCloud, plane.points, uAndV.first, uAndV.second)
 
         plane.points = quickHull(points2D).toIntArray()
 //        plane.points = oldHull(points2D).toIntArray()
