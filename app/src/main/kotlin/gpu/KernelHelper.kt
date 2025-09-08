@@ -1,6 +1,11 @@
 package era.app.gpu
 
 import org.jocl.*
+import org.jocl.CL.clEnqueueWriteBuffer
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.nio.FloatBuffer
+import java.nio.IntBuffer
 
 class KernelHelper {
     val queue: cl_command_queue
@@ -27,6 +32,22 @@ class KernelHelper {
         }
         CL.clReleaseKernel(kernel)
         CL.clReleaseCommandQueue(queue)
+    }
+
+    fun setArgNum(arg: Int) {
+        this.arg = arg
+    }
+
+    fun offsetFloatMem(mem: cl_mem, n: Int, padCount: Int, pad: FloatArray) {
+        clEnqueueWriteBuffer(queue, mem, CL.CL_TRUE,
+            Sizeof.cl_float.toLong() * n, Sizeof.cl_float.toLong() * padCount,
+            Pointer.to(pad), 0, null, null)
+    }
+
+    fun offsetIntMem(mem: cl_mem, n: Int, padCount: Int, pad: IntArray){
+        clEnqueueWriteBuffer(queue, mem, CL.CL_TRUE,
+            Sizeof.cl_int.toLong() * n, Sizeof.cl_int.toLong() * padCount,
+            Pointer.to(pad), 0, null, null)
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -84,10 +105,28 @@ class KernelHelper {
         return outData
     }
 
+    fun getFloatArrAsync(mem: cl_mem, size: Int, event: cl_event) : FloatBuffer {
+        val outData = ByteBuffer.allocateDirect(size * 4).order(ByteOrder.nativeOrder()).asFloatBuffer()
+        CL.clEnqueueReadBuffer(queue, mem, false, 0, Sizeof.cl_float * size.toLong(), Pointer.to(outData), 0, null, event)
+        return outData
+    }
+
+    fun waitEvents(mem: cl_mem, event: cl_event) {
+        CL.clWaitForEvents(1, arrayOf(event))
+        CL.clReleaseEvent(event)
+        CL.clReleaseMemObject(mem)
+    }
+
     fun getIntArr(mem: cl_mem, size: Int) : IntArray {
         val outData = IntArray(size)
         CL.clEnqueueReadBuffer(queue, mem, true, 0, Sizeof.cl_int * size.toLong(), Pointer.to(outData), 0, null, null)
         CL.clReleaseMemObject(mem)
+        return outData
+    }
+
+    fun getIntArrAsync(mem: cl_mem, size: Int, event: cl_event) : IntBuffer {
+        val outData = ByteBuffer.allocateDirect(size * 4).order(ByteOrder.nativeOrder()).asIntBuffer()
+        CL.clEnqueueReadBuffer(queue, mem, false, 0, Sizeof.cl_int * size.toLong(), Pointer.to(outData), 0, null, event)
         return outData
     }
 

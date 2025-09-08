@@ -5,6 +5,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import utils.Threadripper.threadripp
+import kotlin.collections.set
 
 class Hash(val voxelSize: Int, val cloud: Cloud) {
     private val data: LongArray = LongArray(cloud.size)
@@ -19,6 +20,19 @@ class Hash(val voxelSize: Int, val cloud: Cloud) {
                 }
             }
         }
+    }
+
+    fun getVoxelList(): Map<Long, Int> {
+        val res = HashMap<Long, Int>(data.size)
+
+        (0 until data.size).forEach { i->
+            val key = data[i]
+            if (res[key] == null) {
+                res[key] = i
+            }
+        }
+
+        return res
     }
 
     suspend fun getVoxelMap(initialBranchCap: Int, countOfThread: Int): Map<Long, MutableList<Int>> =

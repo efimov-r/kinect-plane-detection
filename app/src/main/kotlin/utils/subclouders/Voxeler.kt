@@ -83,6 +83,13 @@ object Voxeler {
         return res
     }
 
+    suspend fun createVoxelsFastFromHash(cloud: Cloud, hash: Hash, countOfThread: Int) : Cloud {
+        val heshList = hash.getVoxelList().values.toList()
+        val res = Cloud(heshList.size, "res")
+        res.add(cloud, heshList)
+        return res
+    }
+
 
 
     suspend fun CoroutineScope.createVoxelsCloudOfIndex(cloud: Cloud, voxelSizeMm: Int) : Cloud {

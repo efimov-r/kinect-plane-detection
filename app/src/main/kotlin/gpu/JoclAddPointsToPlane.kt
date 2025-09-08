@@ -1,6 +1,8 @@
 package era.app.gpu
 
 import clouds.GpuCloud
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import org.jocl.CL
 import org.jocl.cl_context
 import org.jocl.cl_device_id
@@ -48,8 +50,9 @@ object JoclAddPointsToPlane {
         CL.clBuildProgram(program, 0, null, null, null, null)
     }
 
-    fun runKernel(device: cl_device_id,
-                  cloud: GpuCloud, a: Float, b: Float, c: Float, d: Float, epsNorm: Float, epsNormSec: Float): Pair<IntArray, IntArray> {
+    suspend fun runKernel(device: cl_device_id,
+                  cloud: GpuCloud, a: Float, b: Float, c: Float, d: Float, epsNorm: Float, epsNormSec: Float
+    ): Pair<IntArray, IntArray> {
         val kh = KernelHelper(context!!, program!!, device, "addPointsToPlane")
 
         kh.setKernelArgMem(cloud.xMem)
@@ -69,13 +72,20 @@ object JoclAddPointsToPlane {
 
         kh.runKernel(cloud.size)
 
-        val counterPoints = kh.getInt(counterPointsMem)
-        val counterSecond = kh.getInt(counterSecondMem)
-        val points = kh.getIntArr(pointsMem, counterPoints)
-        val pointsSecond = kh.getIntArr(pointsSecondMem, counterSecond)
+        val res = coroutineScope {
+            val pointsJob = async {
+                val counterPoints = kh.getInt(counterPointsMem)
+                kh.getIntArr(pointsMem, counterPoints)
+            }
+            val pointsSecondJob = async {
+                val counterSecond = kh.getInt(counterSecondMem)
+                kh.getIntArr(pointsSecondMem, counterSecond)
+            }
+            return@coroutineScope pointsJob.await() to pointsSecondJob.await()
+        }
 
         kh.release()
 
-        return points to pointsSecond
+        return res
     }
 }

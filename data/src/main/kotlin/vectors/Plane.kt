@@ -41,15 +41,8 @@ data class Plane(
 
     fun getVecCloud(p: Int) = cloud.getVec(p)
 
-    fun recloud(cloud: Cloud, eps: Float, epsSec: Float) {
+    fun recloud(cloud: Cloud) {
         this.cloud = cloud
-//        points = mutableSetOf()
-//        pointsWithSecondOrder = mutableSetOf()
-
-//        val epsNorm = eps * getNorm()
-//        val epsNormSec = epsSec * getNorm()
-
-//        this.cloud.forEachAddPointToPlaneSimd(a, b, c, d, this, epsNorm, epsNormSec)
     }
 
     fun isPointOnPlane(index: Int, eps: Float): Boolean {
