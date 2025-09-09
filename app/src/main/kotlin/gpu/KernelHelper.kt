@@ -61,6 +61,10 @@ class KernelHelper {
         CL.clSetKernelArg(kernel, arg++, Sizeof.cl_int.toLong(), Pointer.to(intArrayOf(value)))
     }
 
+    fun setKernelLongArg(value: Long) {
+        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_long.toLong(), Pointer.to(longArrayOf(value)))
+    }
+
     fun setKernelIntarrArgWriteOnly(size: Int) : cl_mem {
         val mem = CL.clCreateBuffer(context, CL.CL_MEM_WRITE_ONLY, Sizeof.cl_int * size.toLong(), null, null)
         CL.clSetKernelArg(kernel, arg++, Sizeof.cl_mem.toLong(), Pointer.to(mem))
@@ -69,6 +73,12 @@ class KernelHelper {
 
     fun setKernelFloatarrArgWriteOnly(size: Int) : cl_mem {
         val mem = CL.clCreateBuffer(context, CL.CL_MEM_WRITE_ONLY, Sizeof.cl_float * size.toLong(), null, null)
+        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_mem.toLong(), Pointer.to(mem))
+        return mem
+    }
+
+    fun setKernelLongarrArgWriteOnly(size: Int) : cl_mem {
+        val mem = CL.clCreateBuffer(context, CL.CL_MEM_WRITE_ONLY, Sizeof.cl_long * size.toLong(), null, null)
         CL.clSetKernelArg(kernel, arg++, Sizeof.cl_mem.toLong(), Pointer.to(mem))
         return mem
     }
@@ -101,6 +111,13 @@ class KernelHelper {
     fun getFloatArr(mem: cl_mem, size: Int) : FloatArray {
         val outData = FloatArray(size)
         CL.clEnqueueReadBuffer(queue, mem, true, 0, Sizeof.cl_float * size.toLong(), Pointer.to(outData), 0, null, null)
+        CL.clReleaseMemObject(mem)
+        return outData
+    }
+
+    fun getLongArr(mem: cl_mem, size: Int) : LongArray {
+        val outData = LongArray(size)
+        CL.clEnqueueReadBuffer(queue, mem, true, 0, Sizeof.cl_long * size.toLong(), Pointer.to(outData), 0, null, null)
         CL.clReleaseMemObject(mem)
         return outData
     }

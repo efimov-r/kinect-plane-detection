@@ -33,12 +33,12 @@ object JobBuf {
                     writeCloud.triangleData.clear()
 
 
-                    val text = "         min      max \n" +
-                            "X:      ${readCloud.minX()}    ${readCloud.maxX()}\n" +
-                            "Y:      ${readCloud.minY()}    ${readCloud.maxY()}\n" +
-                            "Z:      ${readCloud.minZ()}    ${readCloud.maxZ()}"
-
-                    channelText.send(ToViewText(text))
+//                    val text = "         min      max \n" +
+//                            "X:      ${readCloud.minX()}    ${readCloud.maxX()}\n" +
+//                            "Y:      ${readCloud.minY()}    ${readCloud.maxY()}\n" +
+//                            "Z:      ${readCloud.minZ()}    ${readCloud.maxZ()}"
+//
+//                    channelText.send(ToViewText(text))
 
                     val planes = create(readCloud) //todo исключения
                     writeCloud.planesData.ofPlainsPolygon(planes.planes, 1f, AppConstants.AD_MAX_MM_ON_V3D)

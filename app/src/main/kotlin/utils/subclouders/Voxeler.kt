@@ -7,6 +7,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import utils.Threadripper.threadripp
 import java.util.concurrent.ThreadLocalRandom
+import kotlin.collections.set
 
 object Voxeler {
 
@@ -83,10 +84,23 @@ object Voxeler {
         return res
     }
 
-    suspend fun createVoxelsFastFromHash(cloud: Cloud, hash: Hash, countOfThread: Int) : Cloud {
-        val heshList = hash.getVoxelList().values.toList()
+    suspend fun createVoxelsFastFromHash(cloud: Cloud) : Cloud {
+        val heshList = getVoxelList(cloud.hash!!).values.toList()
         val res = Cloud(heshList.size, "res")
         res.add(cloud, heshList)
+        return res
+    }
+
+    fun getVoxelList(data: LongArray): Map<Long, Int> {
+        val res = HashMap<Long, Int>(data.size)
+
+        (0 until data.size).forEach { i->
+            val key = data[i]
+            if (res[key] == null) {
+                res[key] = i
+            }
+        }
+
         return res
     }
 

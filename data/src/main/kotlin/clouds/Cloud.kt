@@ -12,7 +12,7 @@ import org.jocl.Pointer
 import org.jocl.Sizeof
 import org.jocl.cl_context
 import vectors.P2D
-import vectors.Plane
+import vectors.PlaneCloud
 import vectors.Vector3Float
 import java.io.Serializable
 import kotlin.math.max
@@ -20,10 +20,12 @@ import kotlin.math.min
 import kotlin.math.sqrt
 
 
-open class Cloud(initialCapacity: Int = 1000, val name: String = "") : Serializable{
-    protected var xArray = FloatArray(initialCapacity)
-    protected var yArray = FloatArray(initialCapacity)
-    protected var zArray = FloatArray(initialCapacity)
+open class Cloud : Serializable{
+    val name: String
+
+    protected var xArray: FloatArray
+    protected var yArray: FloatArray
+    protected var zArray: FloatArray
     protected var sizeI = 0
     val size: Int
         get() {
@@ -37,6 +39,27 @@ open class Cloud(initialCapacity: Int = 1000, val name: String = "") : Serializa
     private var maxY = Float.MIN_VALUE
     private var maxZ = Float.MIN_VALUE
     private var minmaxRelevant = false
+
+    var hash : LongArray? = null
+    var hashSize : Int? = null
+
+    constructor(initialCapacity: Int = 1000, name: String = "") {
+        this.name = name
+        this.xArray = FloatArray(initialCapacity)
+        this.yArray = FloatArray(initialCapacity)
+        this.zArray = FloatArray(initialCapacity)
+    }
+
+    constructor(xArray: FloatArray, yArray: FloatArray, zArray: FloatArray, size: Int,
+                hash : LongArray?, hashSize : Int?, name: String = "") {
+        this.xArray = xArray
+        this.yArray = yArray
+        this.zArray = zArray
+        this.sizeI = size
+        this.hash = hash
+        this.hashSize = hashSize
+        this.name = name
+    }
 
     companion object {
         @JvmStatic
@@ -260,6 +283,7 @@ open class Cloud(initialCapacity: Int = 1000, val name: String = "") : Serializa
         Sizeof.cl_float * size.toLong(), Pointer.to(zArray), null)
 
     fun minMaxDo() {
+        KiLogger.inf("minmaxdo!")
         if(minmaxRelevant) return
         for(i in 0 until sizeI) {
             val x = xArray[i]
@@ -327,7 +351,7 @@ open class Cloud(initialCapacity: Int = 1000, val name: String = "") : Serializa
         }
     }
 
-    fun planeFromPoints(p1: Int, p2: Int, p3: Int): Plane? {
+    fun planeFromPoints(p1: Int, p2: Int, p3: Int): PlaneCloud? {
         val ux = xArray[p2] - xArray[p1]
         val uy = yArray[p2] - yArray[p1]
         val uz = zArray[p2] - zArray[p1]
@@ -356,7 +380,7 @@ open class Cloud(initialCapacity: Int = 1000, val name: String = "") : Serializa
             if (norm < 1e-6f) return null
 
             val d = -(a * xArray[p1] + b * yArray[p1] + c * zArray[p1])
-            return Plane(a, b, c, d, p1, p2, p3, cloud = this)
+            return PlaneCloud(a, b, c, d, p1, p2, p3, cloud = this)
         }
         return null
     }

@@ -6,15 +6,17 @@ import clouds.GpuCloud
 import clouds.Hash
 import era.app.gpu.Gpu
 import era.app.gpu.JoclAddPointsToPlane
+import era.app.gpu.JoclGetCloudOfIndex
+import era.app.gpu.JoclGetFastCloudWithHash
 import era.app.gpu.JoclProjectPointsIndexed
-import era.app.utils.subclouders.CloudOfSensorCompressor.compressHexadrupleRare
 import era.app.utils.subclouders.Voxeler
-import era.utils.files.KiLogger
 import era.utils.time.Span
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import vectors.Plane
+import vectors.PlaneCloud
+import vectors.PlanePoints
+import vectors.Vector3Float
 import java.util.concurrent.ThreadLocalRandom
 
 object Plainer {
@@ -39,93 +41,55 @@ object Plainer {
 
     data class PlainerResult(
         val cloud: Cloud,
-        val planes: List<Plane>
+        val planes: List<PlanePoints>
     )
 
     suspend fun CoroutineScope.create(
         readCloud: BufferedCloudOfSensor
     ) = async (Dispatchers.Default) {
-        if(readCloud.size < 10_000) {
-            return@async PlainerResult(readCloud, emptyList())
-        }
+        val readCloudSize = readCloud.size
+        val readCloudWidth = readCloud.width
+
         span3.resetTimer()
 
-        val loadGpu = async {
-            GpuCloud().loadCloud(Gpu.getContext(), readCloud)
-        }
+        val gpuCloud = GpuCloud().loadCloud(Gpu.getContext(), readCloud)
 
-//        span.resetTimer()
-        val fastCloud = compressHexadrupleRare(readCloud, COTH_CREATE_HASH)
-        if(fastCloud.size < 100) {
-            return@async PlainerResult(readCloud, emptyList())
-        }
+        val hashFastCloud = JoclGetFastCloudWithHash.runKernel(Gpu.getDevice(), gpuCloud,
+            readCloudWidth, readCloudSize, Hash.BIAS.toFloat(), VOXEL_SIZE, Hash.MASK)
 
+        val voxelCloud = Voxeler.createVoxelsFastFromHash(hashFastCloud)
 
-        val voxelCloud = createVoxelRandomCloud(fastCloud)
         if(voxelCloud.size < 10) {
-            return@async PlainerResult(readCloud, emptyList())
+            return@async PlainerResult(
+                JoclGetCloudOfIndex.runKernel(Gpu.getDevice(),
+                    gpuCloud, (0 until readCloudSize).toList().toIntArray()),
+                emptyList())
         }
-//        span.middleCircle(100, "fast")
-
 
         val planes = findPlanesDeterministic(voxelCloud)
-        val gpuCloud = loadGpu.await()
 
-        val mask = BooleanArray(readCloud.size) { true }
-
-
-//        planes.map { plane ->
-//            launch {
-//                plane.recloud(readCloud)
-//                val epsnorm = EPS * plane.getNorm()
-//                val res = JoclAddPointsToPlane.runKernel(Gpu.getDevice(), gpuCloud, plane.a, plane.b, plane.c, plane.d,
-//                    epsnorm, epsnorm*3)
-//                plane.points = res.first
-//                plane.pointsWithSecondOrder = res.second
-//            }
-//        }.joinAll()
-//        planes.forEach { plane ->
-//            plane.recloud(readCloud)
-//            val epsnorm = EPS * plane.getNorm()
-//            val res = JoclAddPointsToPlane.runKernel(Gpu.getDevice(), gpuCloud, plane.a, plane.b, plane.c, plane.d,
-//                epsnorm, epsnorm*3)
-//            plane.points = res.first
-//            plane.pointsWithSecondOrder = res.second
-//        }
-//
-//
-//
-//        planes.forEach { plane ->
-//            for (i in plane.pointsWithSecondOrder) mask[i] = false
-//        }
-//
-//        span2.resetTimer()
-//        planes.forEach { plane ->
-//            convexHullOnPlane(plane, gpuCloud)
-//        }
-//        span2.middleCircle(100, "hull")
-//
-//
-//        val resCloud = readCloud.cloneOfIndex(mask)
-//        val plRes = planes
+        val mask = BooleanArray(readCloudSize) { true }
 
         val recloudJobs = planes.map { plane ->
             async {
-                plane.recloud(readCloud)
                 val planeNorm = plane.getNorm()
                 val res = JoclAddPointsToPlane.runKernel(Gpu.getDevice(), gpuCloud, plane.a, plane.b, plane.c, plane.d,
                     EPS * planeNorm, EPS*3 * planeNorm)
-                plane.points = res.first
-                plane.pointsWithSecondOrder = res.second
-                return@async plane
+                return@async PlaneLocalData(
+                    res.first, res.second,
+                    plane.getUandV(), plane.createPlanePoints())
             }
         }
 
         val hullJobs = recloudJobs.map { job ->
             async {
-                val plane = job.await()
-                convexHullOnPlane(plane, gpuCloud)
-                return@async plane
+                val planeData = job.await()
+                val hull = convexHullOnPlane(planeData, gpuCloud)
+
+                JoclGetCloudOfIndex.runKernel(Gpu.getDevice(),
+                    planeData.plane, gpuCloud, hull)
+
+                return@async planeData.plane
             }
         }
 
@@ -140,7 +104,13 @@ object Plainer {
 
         val resCloud = async {
             maskJobs.awaitAll()
-            val resCloud = readCloud.cloneOfIndex(mask)
+            val indexes = IntArray(readCloudSize - mask.count { !it }) // сразу считаем размер
+            var pos = 0
+            for (n in 0 until readCloudSize) {
+                if (mask[n]) indexes[pos++] = n
+            }
+            val resCloud = JoclGetCloudOfIndex.runKernel(Gpu.getDevice(),
+                gpuCloud, indexes)
 
             return@async resCloud
         }.await()
@@ -157,17 +127,14 @@ object Plainer {
         return@async PlainerResult(resCloud, plRes)
     }.await()
 
+    data class PlaneLocalData(
+        val points: IntArray,
+        val pointsWithSecondOrder: IntArray,
+        val uAndV: Pair<Vector3Float, Vector3Float>,
+        val plane: PlanePoints
+    )
 
-    private suspend fun createVoxelRandomCloud(fastCloud: Cloud) : Cloud {
-        val hashFastCloud = Hash(VOXEL_SIZE, fastCloud)
-        hashFastCloud.init(COTH_CREATE_HASH)
-        span.resetTimer()
-        val res = Voxeler.createVoxelsFastFromHash(fastCloud, hashFastCloud, COTH_CREATE_HASH)
-        span.middleCircle(100, "hash")
-        return res
-    }
-
-    private fun planesIsNotOkOfSq(plane: Plane) : Boolean {
+    private fun planesIsNotOkOfSq(plane: PlaneCloud) : Boolean {
         val p = plane.area()/(VOXEL_SIZE*VOXEL_SIZE) //сколько вокселей в площаде
         return plane.points.size * POINTS_ON_VOXEL < p
     }
@@ -175,10 +142,10 @@ object Plainer {
 
     private suspend fun CoroutineScope.findPlanesDeterministic(
         cloud: Cloud
-    ): List<Plane> {
+    ): List<PlaneCloud> {
         val fPlans = createFPlansRandom(cloud)
 
-        val gPlans = mutableListOf<Plane>()
+        val gPlans = mutableListOf<PlaneCloud>()
         while(fPlans.isNotEmpty()) {
             var indexTopPlan = -1
             var maxPoints = Int.MIN_VALUE
@@ -208,8 +175,8 @@ object Plainer {
 
     val mutex = Mutex()
 
-    private suspend fun CoroutineScope.createFPlansRandom(cloud: Cloud): MutableList<Plane> {
-        val fPlans = mutableListOf<Plane>()
+    private suspend fun CoroutineScope.createFPlansRandom(cloud: Cloud): MutableList<PlaneCloud> {
+        val fPlans = mutableListOf<PlaneCloud>()
         val rnd = ThreadLocalRandom.current()
         val maxDistSq = MAX_DIST_RANDOM_POINT * MAX_DIST_RANDOM_POINT
         val minDistSq = MIN_DIST_RANDOM_POINT * MIN_DIST_RANDOM_POINT
@@ -257,17 +224,14 @@ object Plainer {
     }
 
     suspend fun convexHullOnPlane(
-        plane: Plane, gpuCloud: GpuCloud
-    ) {
-        val uAndV = plane.getUandV()
+        plane: PlaneLocalData, gpuCloud: GpuCloud
+    ) : IntArray {
+        val uAndV = plane.uAndV
         var indexes = plane.points
         val d = (0 until indexes.size step 100).toList()
         indexes = indexes.sliceArray(d)
         val points2D = JoclProjectPointsIndexed.runKernel(Gpu.getDevice(), gpuCloud, indexes, uAndV.first, uAndV.second)
 
-//        plane.points = quickHull(points2D).toIntArray()
-//        span4.resetTimer()
-        plane.points = points2D.oldHull().toIntArray()
-//        span4.middleCircle(100, "oldhull")
+        return points2D.oldHull().toIntArray()
     }
 }

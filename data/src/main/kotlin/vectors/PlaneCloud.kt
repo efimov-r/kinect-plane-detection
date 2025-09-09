@@ -5,7 +5,7 @@ import jdk.incubator.vector.FloatVector
 import kotlin.math.abs
 import kotlin.math.sqrt
 
-data class Plane(
+data class PlaneCloud(
     val a: Float, //todo to private
     val b: Float,
     val c: Float,
@@ -19,7 +19,6 @@ data class Plane(
 
     fun getName() = cloud.name
     var points: IntArray = IntArray(10)
-    var pointsWithSecondOrder: IntArray = IntArray(10)
 
     private var pointsSet: Set<Int>? = null
 
@@ -157,4 +156,7 @@ data class Plane(
         return u to (normal cross u).normalized()
     }
 
+    fun createPlanePoints(initialCapacity: Int = 1000,
+                          name: String = "") =
+        PlanePoints(a, b, c, d, getNorm(), initialCapacity, name)
 }

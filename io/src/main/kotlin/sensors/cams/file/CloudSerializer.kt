@@ -70,7 +70,6 @@ class CloudSerializer(private val channel: BufferedChannel<BufferedCloudOfSensor
                             it.width = KINECT_DEPTH_COLS
                             it.height = KINECT_DEPTH_ROWS
                             it.copyOf(fileCloud)
-                            it.minMaxDo()
                             channel.endWrite(it)
                         }
                     }

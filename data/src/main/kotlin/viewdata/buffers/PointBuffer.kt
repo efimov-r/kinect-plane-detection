@@ -1,15 +1,9 @@
 package viewdata.buffers
 
 import clouds.Cloud
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
 import utils.Threadripper.threadripp
-import vectors.Plane
 import java.lang.Integer.max
-import kotlin.math.min
 
 class PointBuffer(initialCapacity: Int = 10) : ViewBuffer(initialCapacity) {
 

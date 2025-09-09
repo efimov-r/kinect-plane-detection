@@ -5,6 +5,8 @@ import bufferchanel.databuffer.BufferedChannelForView
 import bufferchanel.databuffer.BufferedCloudOfSensor
 import era.app.gpu.Gpu
 import era.app.gpu.JoclAddPointsToPlane
+import era.app.gpu.JoclGetCloudOfIndex
+import era.app.gpu.JoclGetFastCloudWithHash
 import era.app.gpu.JoclProjectPointsIndexed
 import era.app.jobs.JobBuf
 import era.utils.files.KiLogger
@@ -42,6 +44,8 @@ fun main() {
     val gpuContext = Gpu.init()
     JoclAddPointsToPlane.init(gpuContext)
     JoclProjectPointsIndexed.init(gpuContext)
+    JoclGetCloudOfIndex.init(gpuContext)
+    JoclGetFastCloudWithHash.init(gpuContext)
 
     runBlocking {
         launch(Dispatchers.IO){

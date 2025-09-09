@@ -4,7 +4,7 @@ import sensors.cams.kinect.KinectConstant.KINECT_DEPTH_COLS
 import sensors.cams.kinect.KinectConstant.KINECT_DEPTH_ROWS
 import sensors.cams.kinect.freenect.DepthHandler
 import sensors.cams.kinect.freenect.FrameMode
-import sensors.cams.kinect.util.Tari.Companion.getTari
+import sensors.cams.kinect.util.TariInitor.Companion.getTari
 import java.nio.ByteBuffer
 
 class DepthHandlerTestImpl(private val callback: KinnectDepthTestCallback) : DepthHandler {
