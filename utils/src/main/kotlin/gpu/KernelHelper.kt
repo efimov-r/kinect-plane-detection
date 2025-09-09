@@ -1,11 +1,21 @@
-package era.app.gpu
+package era.utils.gpu
 
-import org.jocl.*
+import org.jocl.CL
 import org.jocl.CL.clEnqueueWriteBuffer
+import org.jocl.Pointer
+import org.jocl.Sizeof
+import org.jocl.cl_command_queue
+import org.jocl.cl_context
+import org.jocl.cl_device_id
+import org.jocl.cl_event
+import org.jocl.cl_kernel
+import org.jocl.cl_mem
+import org.jocl.cl_program
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import java.nio.IntBuffer
+import kotlin.collections.forEach
 
 class KernelHelper {
     val queue: cl_command_queue
@@ -87,7 +97,7 @@ class KernelHelper {
         val mem = CL.clCreateBuffer(context,
             CL.CL_MEM_READ_WRITE,
             Sizeof.cl_int.toLong(), null, null)
-        CL.clEnqueueWriteBuffer(queue, mem, true, 0, Sizeof.cl_int.toLong(), Pointer.to(intArrayOf(value)), 0, null, null)
+        clEnqueueWriteBuffer(queue, mem, true, 0, Sizeof.cl_int.toLong(), Pointer.to(intArrayOf(value)), 0, null, null)
         CL.clSetKernelArg(kernel, arg++, Sizeof.cl_mem.toLong(), Pointer.to(mem))
         return mem
     }
@@ -95,6 +105,21 @@ class KernelHelper {
     fun setKernelIntarrCopy(data: IntArray) {
         val mem = CL.clCreateBuffer(context, CL.CL_MEM_READ_ONLY or CL.CL_MEM_COPY_HOST_PTR,
             Sizeof.cl_int * data.size.toLong(), Pointer.to(data), null)
+        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_mem.toLong(), Pointer.to(mem))
+        memToRelease.add(mem)
+    }
+
+    fun setKernelBytearrCopy(data: ByteArray) {
+        val mem = CL.clCreateBuffer(context,(CL.CL_MEM_READ_ONLY or CL.CL_MEM_COPY_HOST_PTR),
+            Sizeof.cl_uchar * data.size.toLong(),Pointer.to(data), null)
+        CL.clSetKernelArg(kernel, arg++, Sizeof.cl_mem.toLong(), Pointer.to(mem))
+        memToRelease.add(mem)
+    }
+
+    fun setKernelFloatarrCopy(data: FloatArray) {
+        val mem = CL.clCreateBuffer(context,
+            CL.CL_MEM_READ_ONLY or CL.CL_MEM_COPY_HOST_PTR,
+            Sizeof.cl_float * data.size.toLong(), Pointer.to(data), null)
         CL.clSetKernelArg(kernel, arg++, Sizeof.cl_mem.toLong(), Pointer.to(mem))
         memToRelease.add(mem)
     }
@@ -154,5 +179,5 @@ class KernelHelper {
         return outData[0]
     }
 
-    
+
 }

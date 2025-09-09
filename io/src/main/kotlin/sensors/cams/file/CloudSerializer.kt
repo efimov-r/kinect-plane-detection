@@ -9,11 +9,12 @@ import kotlinx.coroutines.runBlocking
 import sensors.cams.Cloudsorce
 import sensors.cams.kinect.KinectConstant.KINECT_DEPTH_COLS
 import sensors.cams.kinect.KinectConstant.KINECT_DEPTH_ROWS
+import java.io.Serializable
 
 class CloudSerializer(private val channel: BufferedChannel<BufferedCloudOfSensor>): Cloudsorce {
 
     private var eventThread: EventThread? = null
-    private var kiSer: KiSerializer<Cloud> = KiSerializer(System.getProperty("user.dir") + "/clouds/serializedInputCloud.cl")
+    private var kiSer: KiSerializer<DataSer> = KiSerializer(System.getProperty("user.dir") + "/clouds/serializedInputByte.cl")
     private var isRun = false
 
     override fun startDepth() {
@@ -38,17 +39,26 @@ class CloudSerializer(private val channel: BufferedChannel<BufferedCloudOfSensor
 
     suspend fun writeCloud() {
         channel.getFirstDataForRead()?.let {
-            kiSer.writeObject(it)
+            kiSer.writeObject(DataSer(
+                it.source!!, it.width, it.height, it.size
+            ))
             channel.endWrite(it)
         }
     }
 
-    private class EventThread(private val kiSer: KiSerializer<Cloud>,
+    class DataSer(
+        var source: ByteArray,
+        var width: Int,
+        var height: Int,
+        var size: Int,
+    ) : Serializable
+
+    private class EventThread(private val kiSer: KiSerializer<DataSer>,
                               private val channel: BufferedChannel<BufferedCloudOfSensor>
     ) : Thread() {
         @Volatile
         private var alive = true
-        private var fileCloud: Cloud? = null
+        private var dataSer: DataSer? = null
 
         init {
             setDaemon(true)
@@ -61,15 +71,16 @@ class CloudSerializer(private val channel: BufferedChannel<BufferedCloudOfSensor
 
         override fun run() {
             while (alive) {
-                if(fileCloud == null) {
-                    fileCloud = kiSer.readObject()
+                if(dataSer == null) {
+                    dataSer = kiSer.readObject()
                 }
-                fileCloud?.let {
+                dataSer?.let {
                     runBlocking(Dispatchers.IO){
                         channel.getDataForWrite()?.let {
-                            it.width = KINECT_DEPTH_COLS
-                            it.height = KINECT_DEPTH_ROWS
-                            it.copyOf(fileCloud)
+                            it.width = dataSer!!.width
+                            it.height = dataSer!!.height
+                            it.size = dataSer!!.size
+                            it.source = dataSer!!.source
                             channel.endWrite(it)
                         }
                     }

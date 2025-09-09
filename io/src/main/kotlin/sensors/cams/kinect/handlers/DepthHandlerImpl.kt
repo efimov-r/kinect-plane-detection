@@ -16,10 +16,10 @@ import kotlin.math.tan
 class DepthHandlerImpl(val channel: BufferedChannel<BufferedCloudOfSensor>) : DepthHandler {
     private val depthDataBytes: ByteArray = ByteArray(KINECT_DEPTH_COLS * KINECT_DEPTH_ROWS * 2)
 
-    private val xTanMas: DoubleArray = DoubleArray(KINECT_DEPTH_COLS)
-    private val yTanMas: DoubleArray = DoubleArray(KINECT_DEPTH_ROWS)
+    private val xTanMas: FloatArray = FloatArray(KINECT_DEPTH_COLS)
+    private val yTanMas: FloatArray = FloatArray(KINECT_DEPTH_ROWS)
 
-    private val tariMas: DoubleArray = TariInitor.getTariMass()
+    private val tariMas: FloatArray = TariInitor.getTariMass()
 
     init {
         for(i in xTanMas.indices) {
@@ -33,34 +33,35 @@ class DepthHandlerImpl(val channel: BufferedChannel<BufferedCloudOfSensor>) : De
     override fun onFrameReceived(mode: FrameMode?, frame: ByteBuffer?, timestamp: Int) {
         frame!!.position(0).get(depthDataBytes)
         runBlocking(Dispatchers.IO){
-            channel.getDataForWrite()?.let {
-                var mmRes: Double
+            channel.getDataForWrite()?.let { cloudOfSensor ->
+                var mmRes: Float
 
-                it.clear()
-                it.height = KINECT_DEPTH_ROWS
-                it.width = KINECT_DEPTH_COLS
-                for(i in 0..<KINECT_DEPTH_COLS * KINECT_DEPTH_ROWS){
-                    val kiRes = ((depthDataBytes[i * 2].toInt() and 0xFF)) or ((depthDataBytes[i * 2 + 1].toInt() and 7) shl 8)
-
-                    if(kiRes > KinectConstant.KINECT_DEPTH_MAX) {
-                        it.add(KinectConstant.KINECT_DEPTH_MM_NULL.toFloat(), KinectConstant.KINECT_DEPTH_MM_NULL.toFloat(), KinectConstant.KINECT_DEPTH_MM_NULL.toFloat())
-                    } else {
-                        mmRes = tariMas[kiRes]
-                        val x = xTanMas[i % KINECT_DEPTH_COLS] * mmRes
-                        val y = xTanMas[i / KINECT_DEPTH_COLS] * mmRes
-                        it.add(x.toFloat(), y.toFloat(), mmRes.toFloat())
-                    }
-                }
-                channel.endWrite(it)
+                cloudOfSensor.height = KINECT_DEPTH_ROWS
+                cloudOfSensor.width = KINECT_DEPTH_COLS
+                cloudOfSensor.size = KINECT_DEPTH_ROWS * KINECT_DEPTH_COLS
+                cloudOfSensor.source = depthDataBytes
+//                for(i in 0..<KINECT_DEPTH_COLS * KINECT_DEPTH_ROWS){
+//                    val kiRes = ((depthDataBytes[i * 2].toInt() and 0xFF)) or ((depthDataBytes[i * 2 + 1].toInt() and 7) shl 8)
+//
+//                    if(kiRes > KinectConstant.KINECT_DEPTH_MAX) {
+//                        cloudOfSensor.add(KinectConstant.KINECT_DEPTH_MM_NULL, KinectConstant.KINECT_DEPTH_MM_NULL, KinectConstant.KINECT_DEPTH_MM_NULL)
+//                    } else {
+//                        mmRes = tariMas[kiRes]
+//                        val x = xTanMas[i % KINECT_DEPTH_COLS] * mmRes
+//                        val y = yTanMas[i / KINECT_DEPTH_COLS] * mmRes
+//                        cloudOfSensor.add(x, y, mmRes)
+//                    }
+//                }
+                channel.endWrite(cloudOfSensor)
             }
         }
     }
 
-    private fun calcTan(xy: Int, hw: Int, ug: Double): Double {
+    private fun calcTan(xy: Int, hw: Int, ug: Double): Float {
         val hw05 = hw/2
         val calcY = if(xy > hw05 - 1) xy - hw05 else xy - hw05 - 1
         val onDeg = ug / 2 / (hw05 - 1)
         val deg = onDeg * calcY
-        return tan(Math.toRadians(deg))
+        return tan(Math.toRadians(deg)).toFloat()
     }
 }

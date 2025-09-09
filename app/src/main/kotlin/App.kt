@@ -3,11 +3,7 @@ package era.app
 import bufferchanel.BufferedChannel
 import bufferchanel.databuffer.BufferedChannelForView
 import bufferchanel.databuffer.BufferedCloudOfSensor
-import era.app.gpu.Gpu
-import era.app.gpu.JoclAddPointsToPlane
-import era.app.gpu.JoclGetCloudOfIndex
-import era.app.gpu.JoclGetFastCloudWithHash
-import era.app.gpu.JoclProjectPointsIndexed
+import era.app.gpu.*
 import era.app.jobs.JobBuf
 import era.utils.files.KiLogger
 import keyboard.Keys
@@ -18,8 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import sensors.cams.file.CloudSerializer
 import sensors.cams.kinect.Kinect
-import sensors.cams.kinect.KinectConstant.KINECT_DEPTH_COLS
-import sensors.cams.kinect.KinectConstant.KINECT_DEPTH_ROWS
+import sensors.cams.kinect.util.JoclCloudCreator
 import viewdata.transferdata.ToViewText
 
 fun main() {
@@ -29,7 +24,7 @@ fun main() {
     val channelKeyboard = Channel<Char>(Channel.CONFLATED)
 
     val formSensorChannel = BufferedChannel {
-        return@BufferedChannel BufferedCloudOfSensor(KINECT_DEPTH_ROWS*KINECT_DEPTH_COLS, "cloud of sensor", it)
+        return@BufferedChannel BufferedCloudOfSensor("cloud of sensor", it)
     }
 
     val toViewChannel = BufferedChannel {
@@ -46,6 +41,7 @@ fun main() {
     JoclProjectPointsIndexed.init(gpuContext)
     JoclGetCloudOfIndex.init(gpuContext)
     JoclGetFastCloudWithHash.init(gpuContext)
+    JoclCloudCreator.init(gpuContext)
 
     runBlocking {
         launch(Dispatchers.IO){

@@ -14,14 +14,13 @@ import era.utils.time.Span
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import sensors.cams.kinect.util.JoclCloudCreator
 import vectors.PlaneCloud
 import vectors.PlanePoints
 import vectors.Vector3Float
 import java.util.concurrent.ThreadLocalRandom
 
 object Plainer {
-
-    private const val COTH_CREATE_HASH = 10
     private const val COTH_RANDOM = 10
     private const val MIN_POINT_IN_PLAINS = 40
     private const val VOXEL_SIZE = 200
@@ -31,6 +30,7 @@ object Plainer {
     private const val EPS = 25f // отклонение в мм когда точка еще в плоскости
     private const val POINTS_ON_VOXEL = 4 //количество точек на площадь вокселя допустимое
     private const val MAX_DIV_INTER_POINT = 30 //число, если 1/х частей точек облака пересекается с другим то другова не будет
+    private const val STEP_OF_HULL = 10 //число, одна из скольки точек попадет на расчет границ плоскости, если 1 то все
 
     val span = Span()
     val span2 = Span()
@@ -52,7 +52,7 @@ object Plainer {
 
         span3.resetTimer()
 
-        val gpuCloud = GpuCloud().loadCloud(Gpu.getContext(), readCloud)
+        val gpuCloud = JoclCloudCreator.runKernel(Gpu.getDevice(), readCloud.source!!)
 
         val hashFastCloud = JoclGetFastCloudWithHash.runKernel(Gpu.getDevice(), gpuCloud,
             readCloudWidth, readCloudSize, Hash.BIAS.toFloat(), VOXEL_SIZE, Hash.MASK)
@@ -127,7 +127,7 @@ object Plainer {
         return@async PlainerResult(resCloud, plRes)
     }.await()
 
-    data class PlaneLocalData(
+    class PlaneLocalData(
         val points: IntArray,
         val pointsWithSecondOrder: IntArray,
         val uAndV: Pair<Vector3Float, Vector3Float>,
@@ -143,8 +143,9 @@ object Plainer {
     private suspend fun CoroutineScope.findPlanesDeterministic(
         cloud: Cloud
     ): List<PlaneCloud> {
+        span.resetTimer()
         val fPlans = createFPlansRandom(cloud)
-
+span.middleCircle(100, "random")
         val gPlans = mutableListOf<PlaneCloud>()
         while(fPlans.isNotEmpty()) {
             var indexTopPlan = -1
@@ -205,7 +206,7 @@ object Plainer {
 
                                 if(doDo) {
                                     cloud.planeFromPoints(p1, p2, p3)?.let { plane ->
-                                        plane.setInliersSIMD(cloud, EPS)
+                                        plane.setInliersSIMD(cloud, EPS)//
                                         if(plane.points.size >= MIN_POINT_IN_PLAINS && (!planesIsNotOkOfSq(plane))) {
                                             mutex.withLock{
                                                 fPlans.add(plane)
@@ -228,8 +229,11 @@ object Plainer {
     ) : IntArray {
         val uAndV = plane.uAndV
         var indexes = plane.points
-        val d = (0 until indexes.size step 100).toList()
-        indexes = indexes.sliceArray(d)
+        if(STEP_OF_HULL > 1) {
+            val d = (0 until indexes.size step STEP_OF_HULL).toList()
+            indexes = indexes.sliceArray(d)
+        }
+
         val points2D = JoclProjectPointsIndexed.runKernel(Gpu.getDevice(), gpuCloud, indexes, uAndV.first, uAndV.second)
 
         return points2D.oldHull().toIntArray()

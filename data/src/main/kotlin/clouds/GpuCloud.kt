@@ -1,5 +1,6 @@
 package clouds
 
+import era.utils.gpu.KernelHelper
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -40,6 +41,14 @@ class GpuCloud {
             ).joinAll()
         }
 
+        return this
+    }
+
+    fun loadCloud(xMem: cl_mem, yMem: cl_mem, zMem: cl_mem, size: Int) : GpuCloud{
+        xMemI = xMem
+        yMemI = yMem
+        zMemI = zMem
+        sizeI = size
         return this
     }
 

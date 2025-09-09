@@ -6,8 +6,8 @@ import sensors.cams.kinect.KinectConstant
 object TariInitor {
     private var entities: MutableMap<Int, Int> = mutableMapOf()
 
-    fun getTariMass() : DoubleArray {
-        val tariMas = DoubleArray(KinectConstant.KINECT_DEPTH_MAX + 1)
+    fun getTariMass() : FloatArray {
+        val tariMas = FloatArray(KinectConstant.KINECT_DEPTH_MAX + 1)
         initEntities(entities)
         for (i in tariMas.indices) {
             tariMas[i] = calcVal(i)
@@ -23,13 +23,13 @@ object TariInitor {
         (t .. KinectConstant.KINECT_DEPTH_MAX)
             .firstOrNull{ entities[it] != null}
 
-    private fun calcVal(t: Int): Double {
+    private fun calcVal(t: Int): Float {
         if (t < KinectConstant.KINECT_DEPTH_MIN || t > KinectConstant.KINECT_DEPTH_MAX) {
             return KinectConstant.KINECT_DEPTH_MM_NULL
         }
 
         entities[t]?.let {
-            return it.toDouble()
+            return it.toFloat()
         }
 
         val lastEntity = getLastEntityIndex(t)
@@ -45,7 +45,7 @@ object TariInitor {
 
         val v1 = (t - lastEntity) * v
 
-        return v1 + entities[lastEntity]!!
+        return v1.toFloat() + entities[lastEntity]!!
     }
 
     private fun initEntities(entities: MutableMap<Int, Int>) {

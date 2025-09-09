@@ -59,7 +59,6 @@ data class PlaneCloud(
         return points.contains(index)
     }
 
-    //можно на gpu
     fun setInliersSIMD(cloud: Cloud, eps: Float) {
         val species = FloatVector.SPECIES_PREFERRED
         val len = species.length()

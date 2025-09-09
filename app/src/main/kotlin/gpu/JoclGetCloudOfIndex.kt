@@ -2,6 +2,7 @@ package era.app.gpu
 
 import clouds.Cloud
 import clouds.GpuCloud
+import era.utils.gpu.KernelHelper
 import org.jocl.CL
 import org.jocl.cl_context
 import org.jocl.cl_device_id
