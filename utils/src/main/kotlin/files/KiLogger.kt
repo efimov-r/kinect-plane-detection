@@ -47,7 +47,7 @@ class KiLogger private constructor(fileName: String) {
         private var instance: KiLogger? = null
         fun inf(inf: String) {
             if (instance == null) {
-                instance = KiLogger("${Now.getDateTimeStr()}.log")
+                instance = KiLogger("${Now.getFileDateTimeStr()}.log")
             }
             val log = "INF: ${Now.getDateTimeStr()}: $inf"
             instance!!.writeLn(log)
@@ -61,7 +61,7 @@ class KiLogger private constructor(fileName: String) {
 
         fun warn(err: String) {
             if (instance == null) {
-                instance = KiLogger("${Now.getDateTimeStr()}.log")
+                instance = KiLogger("${Now.getFileDateTimeStr()}.log")
             }
             val log = "WARNING: ${Now.getDateTimeStr()}: $err"
             instance!!.writeLn(log)
@@ -71,7 +71,7 @@ class KiLogger private constructor(fileName: String) {
 
         fun err(err: String) {
             if (instance == null) {
-                instance = KiLogger("${Now.getDateTimeStr()}.log")
+                instance = KiLogger("${Now.getFileDateTimeStr()}.log")
             }
             val log = "ERR: ${Now.getDateTimeStr()}: $err"
             instance!!.writeLn(log)
@@ -79,9 +79,9 @@ class KiLogger private constructor(fileName: String) {
             println(log)
         }
 
-        fun err(ex: java.lang.Exception) {
+        fun err(ex: Throwable) {
             if (instance == null) {
-                instance = KiLogger("${Now.getDateTimeStr()}.log")
+                instance = KiLogger("${Now.getFileDateTimeStr()}.log")
             }
             val log = "ERR: ${Now.getDateTimeStr()}: ${ex.message}"
             instance!!.writeLn(log)

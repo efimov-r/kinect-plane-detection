@@ -21,7 +21,7 @@ class Kinect(channel: BufferedChannel<BufferedCloudOfSensor>): Cloudsorce {
             tmpContext.selectSubdev()
             device = tmpContext.openDevice(0)
             device?.setDepthFormat(DepthFormat.D11BIT)
-        } catch (ex: Exception) {
+        } catch (ex: Throwable) {
             KiLogger.err(ex)
         }
     }

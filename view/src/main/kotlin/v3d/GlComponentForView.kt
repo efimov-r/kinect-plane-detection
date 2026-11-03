@@ -1,7 +1,7 @@
 package v3d
 
 import com.jogamp.opengl.GLCapabilities
-import com.jogamp.opengl.awt.GLCanvas
+import com.jogamp.opengl.awt.GLJPanel
 import com.jogamp.opengl.util.AnimatorBase
 import com.jogamp.opengl.util.FPSAnimator
 import v3d.eventlistener.V3dGlMultiEventListener
@@ -17,10 +17,11 @@ class GlComponentForView(
     keyAdapter: KeyAdapter? = null
 ) {
     private var animator: AnimatorBase? = null
-    val glComponent: GLCanvas
+    // GLJPanel вместо GLCanvas: GLCanvas на Windows с Java 9+ не находит GraphicsConfiguration
+    val glComponent: GLJPanel
 
     init {
-        glComponent = GLCanvas(glCapabilities)
+        glComponent = GLJPanel(glCapabilities)
         glComponent.setFocusable(true)
         glComponent.addGLEventListener(eventListener)
 

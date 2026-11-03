@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm")
+    id("buildsrc.convention.kotlin-jvm")
 }
 
 group = "era"
@@ -7,6 +7,8 @@ version = "unspecified"
 
 repositories {
     mavenCentral()
+    // JOGL 2.4.0 есть только здесь; 2.3.1 не работает на Windows с Java 9+
+    maven("https://jogamp.org/deployment/maven")
 }
 
 dependencies {
@@ -22,8 +24,8 @@ dependencies {
 
 //    implementation 'org.jocl:jocl:2.0.4'
 //    implementation 'org.jocl:jocl-blast:1.5.0'
-    implementation ("org.jogamp.gluegen:gluegen-rt-main:2.3.1")
-    implementation ("org.jogamp.jogl:jogl-all-main:2.3.1")
+    implementation ("org.jogamp.gluegen:gluegen-rt-main:2.4.0")
+    implementation ("org.jogamp.jogl:jogl-all-main:2.4.0")
     implementation ("org.lwjgl.lwjgl:lwjgl:2.9.3")
     implementation ("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")

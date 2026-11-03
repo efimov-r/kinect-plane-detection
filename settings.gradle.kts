@@ -7,6 +7,7 @@ dependencyResolutionManagement {
     // Use Maven Central as a default repository (where Gradle will download dependencies) in all subprojects
     repositories {
         mavenCentral()
+        maven("https://jogamp.org/deployment/maven")
     }
 }
 
