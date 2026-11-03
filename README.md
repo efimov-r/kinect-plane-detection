@@ -1,21 +1,70 @@
-# kkig
+# kkig — поиск плоскостей в облаке точек с Kinect на GPU
 
-This project uses [Gradle](https://gradle.org/).
-To build and run the application, use the Gradle tool window by clicking the Gradle icon in the right toolbar,
-or run it directly from the terminal:
+Desktop-приложение на Kotlin: читает карту глубины с Kinect, строит облако точек, находит в нём плоскости (пол, стены, столы) и показывает результат в 3D. Тяжёлые шаги выполняются на GPU через OpenCL. Хобби-проект: было интересно разобраться с облаками точек и GPU-вычислениями.
 
-* Run `./gradlew run` to build and run the application
-* Run `./gradlew build` to only build the application
-* Run `./gradlew check` to run all checks including tests
-* Run `./gradlew clean` to clean all build outputs
+## Как работает
 
-Note the usage of Gradle Wrapper (`./gradlew`). This is the suggested way to use Gradle in production
-projects. [Learn more about Gradle Wrapper](https://docs.gradle.org/current/userguide/gradle_wrapper.html)
+Данные проходят конвейер из трёх потоков, связанных буферными каналами «писатель — читатель» (`BufferedChannel`):
 
-[Learn more about Gradle tasks](https://docs.gradle.org/current/userguide/command_line_interface.html#common_tasks)
+1. **Источник** — Kinect через libfreenect или облако, ранее сохранённое в файл.
+2. **Обработка** (`Plainer`):
+   - карта глубины превращается в облако точек на GPU;
+   - облако прореживается хеш-вокселями на GPU;
+   - плоскости ищутся по вокселям случайной выборкой точек (в духе RANSAC) с проверкой на пересечение;
+   - к каждой плоскости на GPU добираются точки исходного облака в пределах допуска;
+   - граница плоскости строится выпуклой оболочкой (QuickHull).
+3. **Отображение** — OpenGL (JOGL): облако точек и полигоны найденных плоскостей.
 
-The project follows suggested multi-module setup and consists of "app" and "utils" subprojects.
-The shared build logic was extracted to a convention plugin located in "buildSrc".
+## Стек
 
-This project uses version catalog (see "gradle/libs.versions.toml") to declare and version dependencies
-and both build and configuration cache (see "gradle.properties").
+| Что | Чем |
+|---|---|
+| Язык | Kotlin 2.0, JVM 16, корутины |
+| GPU-вычисления | JOCL (OpenCL), свои kernel'ы |
+| 3D | JOGL (OpenGL), шейдеры, VBO |
+| Kinect | libfreenect через JNA, своя обвязка |
+| Векторные операции | `jdk.incubator.vector` (SIMD) |
+| Сборка | Gradle, многомодульная, convention plugin в `buildSrc`, version catalog |
+
+## Модули
+
+| Модуль | Что внутри |
+|---|---|
+| `app` | точка входа, конвейер обработки, OpenCL-kernel'ы, вокселизация, QuickHull |
+| `io` | источники облаков: Kinect (обвязка libfreenect), чтение и запись в файл |
+| `data` | облака точек, KD-дерево, хеш, векторы, плоскости, буферные каналы, буферы для отрисовки |
+| `view` | окно, OpenGL-рендер, шейдеры, VBO, управление камерой |
+| `utils` | логгер, сериализация, замер времени, помощник для OpenCL-kernel'ов |
+
+## Запуск
+
+Нужно:
+
+- JDK 16+;
+- GPU или CPU с драйвером OpenCL;
+- для работы с сенсором — Kinect и libfreenect (ищется в `/usr/local/lib`).
+
+```sh
+./gradlew :app:run
+```
+
+Сохранённое облако читается из `clouds/serializedInputByte.cl` в рабочей папке, логи пишутся в `log/`.
+
+## Управление
+
+| Клавиша | Действие |
+|---|---|
+| `K` | облако с Kinect |
+| `F` | облако из файла |
+| `S` | сохранить текущее облако с Kinect в файл |
+| `P` | пауза |
+
+Мышь: левая кнопка — сдвиг, правая — поворот, колесо — приближение.
+
+## Состояние
+
+Экспериментальный проект, код в том виде, в каком остался после экспериментов. Сторонние библиотеки (JOCL, JOGL, protobuf и др.) лежат jar-файлами в `lib/` модулей. Тесты — скорее пробные прогоны, чем проверки.
+
+## Лицензия
+
+[MIT](LICENSE)
